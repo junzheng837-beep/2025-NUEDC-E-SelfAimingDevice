@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "name": "timer_irq_led",
+  "title": "TIMG12 1 ms Interrupt PB22 LED",
+  "description": "Periodic TIMG12 interrupt reference for toggling the LCKFB Tianmengxing MSPM0G3507 onboard PB22 LED every 500 ms.",
+  "board": "LCKFB Tianmengxing MSPM0G3507",
+  "device": "MSPM0G3507",
+  "package": "LQFP-64",
+  "sdk": "MSPM0 SDK 2.10.00.04",
+  "sysconfig": "1.26.2",
+  "validated": true,
+  "validation_level": "hardware",
+  "complexity": "basic",
+  "clock": {
+    "cpuclk_hz": 80000000,
+    "mfclk_hz": 4000000,
+    "timer_period_ms": 1
+  },
+  "peripherals": ["SYSCTL", "GPIO", "TIMER"],
+  "pins": ["PB22"],
+  "source_files": ["src/main.c"],
+  "syscfg": "example.syscfg",
+  "generated_names": ["TIMER_0_INST", "TIMER_0_INST_INT_IRQN", "TIMER_0_INST_LOAD_VALUE", "LED_PORT", "LED_PIN_22_PIN"],
+  "parameters": {
+    "timer": "TIMG12",
+    "timer_period_ms": 1,
+    "timer_load_value": 79999,
+    "toggle_every_interrupts": 500,
+    "toggle_period_ms": 500
+  },
+  "tags": ["timer", "interrupt", "timg12", "gpio", "led", "pb22"]
+}

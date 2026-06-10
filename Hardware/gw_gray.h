@@ -9,7 +9,6 @@ float Huidu_Proc(uint16_t huidu_data);
 
 extern float huidu_lasterror;
 
-extern float Huidu_Target;
 extern uint16_t Huidu_Datas;
 extern float Huidu_Error;
 extern int Huidu_Sum;

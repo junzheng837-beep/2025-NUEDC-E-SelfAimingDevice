@@ -139,21 +139,21 @@ endif
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXE_OUTPUTS += \
-DS_E03_Show06.out 
+DS_E03_Show06\ copy.out 
 
 EXE_OUTPUTS__QUOTED += \
-"DS_E03_Show06.out" 
+"DS_E03_Show06 copy.out" 
 
 
 # All Target
 all: $(OBJS) $(GEN_CMDS)
-	@$(MAKE) --no-print-directory -Onone "DS_E03_Show06.out"
+	@$(MAKE) --no-print-directory -Onone "DS_E03_Show06 copy.out"
 
 # Tool invocations
-DS_E03_Show06.out: $(OBJS) $(GEN_CMDS)
+DS_E03_Show06\ copy.out: $(OBJS) $(GEN_CMDS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: Arm Linker'
-	"E:/TI_02/CCS/ccs/tools/compiler/ti-cgt-armllvm_4.0.2.LTS/bin/tiarmclang.exe" @"device.opt"  -march=thumbv6m -mcpu=cortex-m0plus -mfloat-abi=soft -mlittle-endian -mthumb -O0 -gdwarf-3 -Wl,-m"DS_E03_Show06.map" -Wl,-i"E:/TI_02/CCS/mspm0_sdk_2_05_01_00/source" -Wl,-i"E:/TI_Files/DS_E03_Show06" -Wl,-i"E:/TI_Files/DS_E03_Show06/Debug/syscfg" -Wl,-i"E:/TI_02/CCS/ccs/tools/compiler/ti-cgt-armllvm_4.0.2.LTS/lib" -Wl,--diag_wrap=off -Wl,--display_error_number -Wl,--warn_sections -Wl,--xml_link_info="DS_E03_Show06_linkInfo.xml" -Wl,--rom_model -o "DS_E03_Show06.out" $(ORDERED_OBJS)
+	"E:/TI_02/CCS/ccs/tools/compiler/ti-cgt-armllvm_4.0.2.LTS/bin/tiarmclang.exe" @"device.opt"  -march=thumbv6m -mcpu=cortex-m0plus -mfloat-abi=soft -mlittle-endian -mthumb -O0 -gdwarf-3 -Wl,-m"DS_E03_Show06 copy.map" -Wl,-i"E:/TI_02/CCS/mspm0_sdk_2_05_01_00/source" -Wl,-i"E:/TI_Files/DS_E03_Show06 copy" -Wl,-i"E:/TI_Files/DS_E03_Show06 copy/Debug/syscfg" -Wl,-i"E:/TI_02/CCS/ccs/tools/compiler/ti-cgt-armllvm_4.0.2.LTS/lib" -Wl,--diag_wrap=off -Wl,--display_error_number -Wl,--warn_sections -Wl,--xml_link_info="DS_E03_Show06 copy_linkInfo.xml" -Wl,--rom_model -o "DS_E03_Show06 copy.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 

@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "skills": {
+    "embedded-systems": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "skillPath": "skills/embedded-systems/SKILL.md",
+      "computedHash": "046558a8e6cd2c7e3e1da41360d64687fc72514329e04aad15e5bb7c4d19681b"
+    },
+    "git-conventional-commits": {
+      "source": "accolver/skill-maker",
+      "sourceType": "github",
+      "skillPath": "git-conventional-commits/SKILL.md",
+      "computedHash": "7b309bba69cabe8847bf97afafc693489d904ff075875294bd83ffba7466fadb"
+    },
+    "mspm0-ccs": {
+      "source": "mc3545dada/mspm0-skill",
+      "sourceType": "github",
+      "skillPath": "skills/mspm0-ccs/SKILL.md",
+      "computedHash": "296050c002bfd4191528374a294d3b97cbe9041a6de48bd1df9098eb0a110107"
+    },
+    "serial": {
+      "source": "zhinkgit/embeddedskills",
+      "sourceType": "github",
+      "skillPath": "serial/SKILL.md",
+      "computedHash": "56b8567778ebc347733dc87af7f624e1a0cd415ad0924c3069ae033c6338948e"
+    }
+  }
+}

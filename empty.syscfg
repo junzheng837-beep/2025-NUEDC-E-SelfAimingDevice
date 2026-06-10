@@ -289,6 +289,7 @@ TIMER4.timerClkDiv      = 8;
 TIMER4.timerClkPrescale = 8;
 TIMER4.interrupts       = ["ZERO"];
 
+
 UART1.$name                    = "UART_0";
 UART1.enabledInterrupts        = ["RX"];
 UART1.interruptPriority        = "0";

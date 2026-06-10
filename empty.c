@@ -5,7 +5,6 @@
 #include "ti_msp_dl_config.h"
 #include "key.h"
 #include "delay.h"
-// #include "oled.h"
 #include "bmp.h"
 #include "usart.h"
 #include "Encoder.h"
@@ -36,8 +35,6 @@ extern uint8_t flag_1s_printf;
 
 void LCD_Init(void);
 void PD42S1_Init(void);
-void JY61P_Dis(void);
-void JY61P_Proc(void);
 
 /*-------------------------------------------------------------------------------------------*/
 /*---------------------------------------主函数----------------------------------------------*/
@@ -52,7 +49,6 @@ int main(void)
     LCD_Init();//屏幕初始化（实际使用TFT屏幕）
     Bluetooth_Init(); // 蓝牙初始化
     PD42S1_Init();// 电机相关的初始化 (如果你的smd.c里有初始化函数的话)
-    // protocol_init(); // 初始化野火协议的环形缓冲区
     while (1)
     {
         
@@ -64,7 +60,7 @@ int main(void)
 
         KEY_PROC();
         LCD_Show_Proc();
-        // 🌟 极简之美：主循环只管调用大总管，具体的苦活累活全都丢给 task.c 里的调度器
+        // 主循环仅调用任务调度器，具体的任务分发由 task.c 处理
         Task_Scheduler();
         
         // 蓝牙数据接收处理
@@ -91,29 +87,6 @@ int main(void)
                 Mobile_sendData_UART1(Motor1_Speed, Motor2_Speed, yaw_to_send);
             }
         }
-    }
-}
-
-void JY61P_Dis(void)
-{
-    // 每 5ms 读取一次陀螺仪
-    if (flag_5ms_gyro_read)
-    {
-        flag_5ms_gyro_read = 0;   // 清除标记
-        JY61P_Data = get_angle(); // 不在中断里卡死
-    }
-
-    // 每 1s 打印一次数据
-    if (flag_1s_printf)
-    {
-        flag_1s_printf = 0; // 清除标记
-        // if(JY61P_Data != NULL) {
-        //     lc_printf("JY61P RollX  = [ %d ]\r\n", (int)JY61P_Data->x);
-        //     lc_printf("JY61P PitchY = [ %d ]\r\n", (int)JY61P_Data->y);
-        //     lc_printf("JY61P YawZ   = [ %d ]\r\n", (int)JY61P_Data->z);
-        // }
-        // 打印两个轮子的实时速度
-        uart1_printf("Speed1: %.2f | Speed2: %.2f \r\n", Motor1_Speed, Motor2_Speed);
     }
 }
 

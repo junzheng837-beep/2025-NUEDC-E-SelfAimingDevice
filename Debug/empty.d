@@ -75,24 +75,24 @@ empty.o: ../empty.c ../main.h \
  E:/TI_02/CCS/mspm0_sdk_2_05_01_00/source/ti/driverlib/dl_wwdt.h \
  E:/TI_02/CCS/mspm0_sdk_2_05_01_00/source/ti/driverlib/m0p/dl_interrupt.h \
  E:/TI_02/CCS/mspm0_sdk_2_05_01_00/source/ti/driverlib/m0p/dl_systick.h \
- E:/TI_Files/DS_E03_Show06/middle/delay.h \
- E:/TI_Files/DS_E03_Show06/main.h \
- E:/TI_Files/DS_E03_Show06/Hardware/process_frame.h \
- E:/TI_Files/DS_E03_Show06/Hardware/smd.h \
- E:/TI_Files/DS_E03_Show06/Hardware/key.h \
- E:/TI_Files/DS_E03_Show06/Hardware/bmp.h \
- E:/TI_Files/DS_E03_Show06/middle/usart.h \
- E:/TI_Files/DS_E03_Show06/Hardware/Encoder.h \
- E:/TI_Files/DS_E03_Show06/Hardware/motor_ctrl.h \
- E:/TI_Files/DS_E03_Show06/Hardware/protocol.h \
- E:/TI_Files/DS_E03_Show06/Hardware/gw_gray.h \
- E:/TI_Files/DS_E03_Show06/Hardware/task.h \
- E:/TI_Files/DS_E03_Show06/middle/timer.h \
- E:/TI_Files/DS_E03_Show06/app/app_lcd.h \
- E:/TI_Files/DS_E03_Show06/Hardware/hw_lcd.h \
- E:/TI_Files/DS_E03_Show06/app/app_protocol.h \
- E:/TI_Files/DS_E03_Show06/Hardware/bsp_gyro.h \
- E:/TI_Files/DS_E03_Show06/Hardware/bsp_hc05.h
+ E:/TI_Files/DS_E03_Show06\ copy/middle/delay.h \
+ E:/TI_Files/DS_E03_Show06\ copy/main.h \
+ E:/TI_Files/DS_E03_Show06\ copy/Hardware/process_frame.h \
+ E:/TI_Files/DS_E03_Show06\ copy/Hardware/smd.h \
+ E:/TI_Files/DS_E03_Show06\ copy/Hardware/key.h \
+ E:/TI_Files/DS_E03_Show06\ copy/Hardware/bmp.h \
+ E:/TI_Files/DS_E03_Show06\ copy/middle/usart.h \
+ E:/TI_Files/DS_E03_Show06\ copy/Hardware/Encoder.h \
+ E:/TI_Files/DS_E03_Show06\ copy/Hardware/motor_ctrl.h \
+ E:/TI_Files/DS_E03_Show06\ copy/Hardware/protocol.h \
+ E:/TI_Files/DS_E03_Show06\ copy/Hardware/gw_gray.h \
+ E:/TI_Files/DS_E03_Show06\ copy/Hardware/task.h \
+ E:/TI_Files/DS_E03_Show06\ copy/middle/timer.h \
+ E:/TI_Files/DS_E03_Show06\ copy/app/app_lcd.h \
+ E:/TI_Files/DS_E03_Show06\ copy/Hardware/hw_lcd.h \
+ E:/TI_Files/DS_E03_Show06\ copy/app/app_protocol.h \
+ E:/TI_Files/DS_E03_Show06\ copy/Hardware/bsp_gyro.h \
+ E:/TI_Files/DS_E03_Show06\ copy/Hardware/bsp_hc05.h
 ../main.h:
 ti_msp_dl_config.h:
 E:/TI_02/CCS/mspm0_sdk_2_05_01_00/source/ti/devices/msp/msp.h:
@@ -168,21 +168,21 @@ E:/TI_02/CCS/mspm0_sdk_2_05_01_00/source/ti/driverlib/dl_vref.h:
 E:/TI_02/CCS/mspm0_sdk_2_05_01_00/source/ti/driverlib/dl_wwdt.h:
 E:/TI_02/CCS/mspm0_sdk_2_05_01_00/source/ti/driverlib/m0p/dl_interrupt.h:
 E:/TI_02/CCS/mspm0_sdk_2_05_01_00/source/ti/driverlib/m0p/dl_systick.h:
-E:/TI_Files/DS_E03_Show06/middle/delay.h:
-E:/TI_Files/DS_E03_Show06/main.h:
-E:/TI_Files/DS_E03_Show06/Hardware/process_frame.h:
-E:/TI_Files/DS_E03_Show06/Hardware/smd.h:
-E:/TI_Files/DS_E03_Show06/Hardware/key.h:
-E:/TI_Files/DS_E03_Show06/Hardware/bmp.h:
-E:/TI_Files/DS_E03_Show06/middle/usart.h:
-E:/TI_Files/DS_E03_Show06/Hardware/Encoder.h:
-E:/TI_Files/DS_E03_Show06/Hardware/motor_ctrl.h:
-E:/TI_Files/DS_E03_Show06/Hardware/protocol.h:
-E:/TI_Files/DS_E03_Show06/Hardware/gw_gray.h:
-E:/TI_Files/DS_E03_Show06/Hardware/task.h:
-E:/TI_Files/DS_E03_Show06/middle/timer.h:
-E:/TI_Files/DS_E03_Show06/app/app_lcd.h:
-E:/TI_Files/DS_E03_Show06/Hardware/hw_lcd.h:
-E:/TI_Files/DS_E03_Show06/app/app_protocol.h:
-E:/TI_Files/DS_E03_Show06/Hardware/bsp_gyro.h:
-E:/TI_Files/DS_E03_Show06/Hardware/bsp_hc05.h:
+E:/TI_Files/DS_E03_Show06\ copy/middle/delay.h:
+E:/TI_Files/DS_E03_Show06\ copy/main.h:
+E:/TI_Files/DS_E03_Show06\ copy/Hardware/process_frame.h:
+E:/TI_Files/DS_E03_Show06\ copy/Hardware/smd.h:
+E:/TI_Files/DS_E03_Show06\ copy/Hardware/key.h:
+E:/TI_Files/DS_E03_Show06\ copy/Hardware/bmp.h:
+E:/TI_Files/DS_E03_Show06\ copy/middle/usart.h:
+E:/TI_Files/DS_E03_Show06\ copy/Hardware/Encoder.h:
+E:/TI_Files/DS_E03_Show06\ copy/Hardware/motor_ctrl.h:
+E:/TI_Files/DS_E03_Show06\ copy/Hardware/protocol.h:
+E:/TI_Files/DS_E03_Show06\ copy/Hardware/gw_gray.h:
+E:/TI_Files/DS_E03_Show06\ copy/Hardware/task.h:
+E:/TI_Files/DS_E03_Show06\ copy/middle/timer.h:
+E:/TI_Files/DS_E03_Show06\ copy/app/app_lcd.h:
+E:/TI_Files/DS_E03_Show06\ copy/Hardware/hw_lcd.h:
+E:/TI_Files/DS_E03_Show06\ copy/app/app_protocol.h:
+E:/TI_Files/DS_E03_Show06\ copy/Hardware/bsp_gyro.h:
+E:/TI_Files/DS_E03_Show06\ copy/Hardware/bsp_hc05.h:

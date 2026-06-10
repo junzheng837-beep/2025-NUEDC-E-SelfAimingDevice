@@ -1,18 +1,3 @@
-/***
-	*******************************************************************************************************************************************************************
-	* @file    usart.c
-	* @version V2.1
-	* @date    2024-7-22
-	* @author  御龙	
-	* @brief   MSPM0G3507小车PID调试通用模板
-   *************************************************************************************************
-   *  @description
-	*	
-	*  接口配置可以使用Sysconfig看
-   *
->>>>> 其他说明：未经允许不可擅自转发、售卖本套代码，大家都是我国的有为青年，请保持好自己的初心，在此，向你表达我的感谢
-	*************************************************************************************************************************************************************
-***/
 #include <stdbool.h>
 #include "usart.h"
 #include "protocol.h"
@@ -40,13 +25,6 @@ uint8_t g_rx2_cmd[128];
 // ================= 新增：UART_1 的接收缓存与变量 =================
 uint8_t uart1_data = 0;
 volatile bool g_rx_uart1_flag = false;
-
-
-/*-------------------------------------------------------------------------------------------*/
-/*-------------------------------------步进电机串口--------------------------------------------*/
-/*--------------------------步进电机串口发送测试：smd_send_data("12345\n",10);-------------------*/
-/*-------------------------------------------------------------------------------------------*/
-
 
 /*-------------------------------------------------------------------------------------------*/
 /*-------------------------------------------------------------------------------------------*/
@@ -203,43 +181,6 @@ void Float_to_Byte(float f,unsigned char byte[]){
     byte[2]=(unsigned char)(fl.ldata>>16);
     byte[3]=(unsigned char)(fl.ldata>>24);
 }
-void JustFloat_Test(void)	//justfloat 数据协议测试
-{
-    float a=1,b=2;	//发送的数据 两个通道
-	
-	u8 byte[4]={0};		//float转化为4个字节数据
-	u8 tail[4]={0x00, 0x00, 0x80, 0x7f};	//帧尾
-	
-	//向上位机发送两个通道数据
-	Float_to_Byte(a,byte);
-	//u1_printf("%f\r\n",a);
-	JustFloat_SendArray(byte,4);	//1转化为4字节数据 就是  0x00 0x00 0x80 0x3F
-	
-	Float_to_Byte(b,byte);
-	JustFloat_SendArray(byte,4);	//2转换为4字节数据 就是  0x00 0x00 0x00 0x40 
-	
-	//发送帧尾
-	JustFloat_SendArray(tail,4);	//帧尾为 0x00 0x00 0x80 0x7f
-
-}
-//向vofa发送数据  三个数据  三个通道  可视化显示  帧尾
-void vofa_sendData(float a,float b,float c){
-    u8 byte[4]= {0};//float转化为4个字节数据
-    u8 tail[4]= {0x00, 0x00, 0x80, 0x7f};//帧尾
-
-    //向上位机发送通道数据
-    Float_to_Byte(a,byte);
-    JustFloat_SendArray(byte,4);	
-
-    Float_to_Byte(b,byte);
-    JustFloat_SendArray(byte,4);	
-
-    Float_to_Byte(c,byte);
-    JustFloat_SendArray(byte,4);
-    //发送帧尾
-    JustFloat_SendArray(tail,4);	//帧尾为 0x00 0x00 0x80 0x7f
-}
-
 
 #define BUFFER_SIZE 32
 char serial_buffer[BUFFER_SIZE];
@@ -255,27 +196,29 @@ void UART_MOTOR_INST_IRQHandler(void)
     switch (DL_UART_Main_getPendingInterrupt(UART_MOTOR_INST)) 
     {
         case DL_UART_MAIN_IIDX_RX:
-            uint8_t rx_data = DL_UART_Main_receiveData(UART_MOTOR_INST);
+            {
+                uint8_t rx_data = DL_UART_Main_receiveData(UART_MOTOR_INST);
             
-            // 🌟 1. 严格帧头过滤：如果还没收到有效的帧头 0xC5，直接丢弃游离的垃圾数据
+            // 1. 帧头过滤：若未接收到有效帧头 0xC5，则丢弃无效数据
             if (g_rx_len == 0 && rx_data != 0xC5) {
                 return; 
             }
             
-            // 【新增】：防止数组越界卡死单片机
+            // 防止接收缓冲区越界
             if(g_rx_len < 128) {
                 g_rx_cmd[g_rx_len++] = rx_data;
             } else {
                 g_rx_len = 0; // 溢出强制清零
             }
             
-            // 🌟 2. 修正帧尾判定为 0x5C (正点原子协议)
-            // 同时增加最小长度约束(>=6字节)，防止数据有效载荷中偶然出现的 0x5C 导致提前断帧！
+            // 2. 帧尾判定 (0x5C)
+            // 增加最小长度约束，避免有效载荷中的数据被误判为帧尾
             if (g_rx_len >= 6 && rx_data == 0x5C) 
             {
                 g_rx_frame_flag = true; 
             }
             break;
+        }
             
         default:
             break;
@@ -287,9 +230,10 @@ void UART_MOTOR_2_INST_IRQHandler(void)
     switch (DL_UART_Main_getPendingInterrupt(UART_MOTOR_2_INST)) 
     {
         case DL_UART_MAIN_IIDX_RX:
-            uint8_t rx_data = DL_UART_Main_receiveData(UART_MOTOR_2_INST);
+            {
+                uint8_t rx_data = DL_UART_Main_receiveData(UART_MOTOR_2_INST);
             
-            // 🌟 1. 严格帧头过滤：必须以 0xC5 开头
+            // 1. 帧头过滤：校验起始字节 0xC5
             if (g_rx2_len == 0 && rx_data != 0xC5) {
                 return; 
             }
@@ -301,11 +245,12 @@ void UART_MOTOR_2_INST_IRQHandler(void)
                 g_rx2_len = 0; // 溢出清零
             }
             
-            // 🌟 2. 修正帧尾判定为 0x5C，且加入最小长度约束
+            // 2. 帧尾判定 (0x5C) 及长度约束
             if (g_rx2_len >= 6 && rx_data == 0x5C) {
                 g_rx2_frame_flag = true; 
             }
             break;
+        }
             
         default:
             break;
@@ -322,7 +267,7 @@ void UART_0_INST_IRQHandler(void)
             // 1. 读取接收到的 1 个字节数据
             uart_data = DL_UART_Main_receiveData(UART_0_INST);
             
-            // 2. 【核心】：喂给状态机解析！这步将唤醒你的步进电机！
+            // 2. 将数据交由状态机解析以触发后续动作
             K230_Parse_Data(uart_data); 
 
             break;
@@ -331,7 +276,7 @@ void UART_0_INST_IRQHandler(void)
     }
 }
 
-// ================= 新增：专门给蓝牙 (UART_1) 发送 VOFA+ 数据的底层函数 =================
+// 蓝牙 (UART_1) 数据底层发送函数
 void JustFloat_SendArray_UART1(uint8_t *string, uint8_t length)
 {
     while(length--)
@@ -340,7 +285,7 @@ void JustFloat_SendArray_UART1(uint8_t *string, uint8_t length)
     }
 }
 
-// 专为手机 App (如蓝牙调试器、微信小程序) 设计的通用波形发送函数 (CSV格式)
+// 通用波形发送函数 (CSV格式，适配蓝牙调试器等移动端 App)
 void Mobile_sendData_UART1(float a, float b, float c)
 {
     char send_buf[64];
@@ -372,15 +317,3 @@ void Mobile_sendData_UART1(float a, float b, float c)
     }
 }
 
-// 专门给蓝牙发 3 个通道波形的函数 (X, Y, Z 轴)
-void vofa_sendData_UART1(float a, float b, float c)
-{
-    uint8_t byte[4] = {0};
-    uint8_t tail[4] = {0x00, 0x00, 0x80, 0x7f}; // VOFA+ 的 JustFloat 帧尾
-
-    Float_to_Byte(a, byte); JustFloat_SendArray_UART1(byte, 4);    
-    Float_to_Byte(b, byte); JustFloat_SendArray_UART1(byte, 4);    
-    Float_to_Byte(c, byte); JustFloat_SendArray_UART1(byte, 4);
-    
-    JustFloat_SendArray_UART1(tail, 4); // 发送帧尾
-}

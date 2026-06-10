@@ -3,8 +3,6 @@
 
 #include "main.h"
 
-extern int remaining_steps1;
-extern int remaining_steps2;
 extern uint8_t uart_data;
 #define RX_BUFFER_SIZE   128
 
@@ -13,7 +11,6 @@ extern volatile bool g_rx_uart1_flag;
 
 
 
-void Motor_UART_SendArray(uint8_t *pBuf, uint16_t len);
 void UART_MOTOR_INST_IRQHandler(void);
 
 //串口发送单个字符
@@ -26,16 +23,11 @@ void usart0_send_byte(unsigned char byte);
 void usart0_send_bytes(unsigned char *buf, int len);
 void usart1_send_byte(unsigned char byte);
 
-void process_control_command(void);
 
 void JustFloat_SendArray(uint8_t *string,uint8_t length);
 /*将浮点数f转化为4个字节数据存放在byte[4]中*/
 void Float_to_Byte(float f,unsigned char byte[]);
-//justfloat 数据协议测试
-void JustFloat_Test(void);	
-//向vofa发送数据  三个数据  三个通道  可视化显示  帧尾
-void vofa_sendData(float a,float b,float c);
-void vofa_sendData_UART1(float a, float b, float c);
+
 void Mobile_sendData_UART1(float a, float b, float c);
 
 int LOG_Debug_Out(const char* __file, const char* __func, int __line, const char* format, ...);
@@ -48,7 +40,6 @@ int LOG_Debug_Out(const char* __file, const char* __func, int __line, const char
 
 
 /* 使用可变参数是实现的类printf函数 */
-int c(char* format,...);
 
 uint8_t HAL_UART_Transmit( uint8_t *pData, uint16_t Size, uint32_t Timeout);
 

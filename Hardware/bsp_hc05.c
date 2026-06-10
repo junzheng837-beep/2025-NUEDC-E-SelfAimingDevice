@@ -9,8 +9,8 @@ volatile uint8_t ble_rx_idle_cnt = 0;
 
 void BLE_Send_Bit(unsigned char ch)
 {
-    // 淇锛氫笉瑕佷娇鐢?DL_UART_isBusy锛屽洜涓哄畠鍦ㄦ帴鏀舵暟鎹椂涔熶細杩斿洖 true 瀵艰嚧姝婚攣鎸傝捣
-    // 浣跨敤闃诲鍙戦€佸嚱鏁帮紝瀹冨唴閮ㄥ彧妫€娴嬪彂閫?FIFO 鏄惁宸叉弧
+    // 修复：不要使用 DL_UART_isBusy，因为它在接收数据时也会返回 true 导致死锁挂起
+    // 使用阻塞发送函数，内部仅检测发送 FIFO 是否已满
     DL_UART_Main_transmitDataBlocking(UART_1_INST, ch);
 }
 
@@ -22,11 +22,6 @@ void BLE_send_String(unsigned char *str)
     }
 }
 
-void Clear_BLERX_BUFF(void)
-{
-    BLERX_LEN = 0;
-    BLERX_FLAG = 0;
-}
 
 void Bluetooth_Init(void)
 {
@@ -69,26 +64,26 @@ void Receive_Bluetooth_Data(void)
         if (ch == '\n' || ch == ']' || local_len >= 127) {
             local_buf[local_len] = '\0';
 
-        // ================= 鑷姩鍚屾闈㈡澘涓庤皟鍙傚璞?=================
+        // ================= 自动同步面板与调参对象 =================
         extern uint8_t OLED_View_Select;
         if (OLED_View_Select == 2 || OLED_View_Select == 7) {
-            v_loop = 2; // 浠匱urn
+            v_loop = 2; // 从 Turn
         } else if (OLED_View_Select == 5) {
-            v_loop = 0; // 浠匨1
+            v_loop = 0; // 从 M1
         } else if (OLED_View_Select == 6) {
-            v_loop = 1; // 浠匨2
+            v_loop = 1; // 从 M2
         } else if (OLED_View_Select == 8) {
-            v_loop = 4; // 浠匘ist
+            v_loop = 4; // 从 Dist
         } else if (OLED_View_Select == 10) {
-            v_loop = 3; // 浠匒ngle
+            v_loop = 3; // 从 Angle
         } else if (OLED_View_Select == 1) {
-            // 鍦ㄦ祴璇曠湅鏉块〉锛寁_loop 鍙兘鏄?M1 鎴?M2锛岄槻姝㈣秺鐣?            if (v_loop != 0 && v_loop != 1) v_loop = 0;
+            // 在测试看板页，v_loop 只能是 M1 或 M2，防止越界            if (v_loop != 0 && v_loop != 1) v_loop = 0;
         }
         extern uint8_t Tuning_Loop;
         Tuning_Loop = v_loop;
         // =======================================================
 
-        // 浜や簰寮?PID 璋冨弬瑙ｆ瀽
+        // 交互式 PID 调参解析
         float val = 0.0f;
         char msg[64];
         if (strncmp((char *)local_buf, "TP=", 3) == 0 || strncmp((char *)local_buf, "tp=", 3) == 0) {
@@ -185,19 +180,19 @@ void Receive_Bluetooth_Data(void)
             sprintf(msg, "M2 Kd set to: %d.%02d\r\n", (int)val, (int)(val*100)%100);
             BLE_send_String((unsigned char *)msg);
         }
-        // 铏氭嫙鎸夐敭璋冨弬閫昏緫
+        // 虚拟按键调参逻辑
         else if (strncmp((char *)local_buf, "[key,", 5) == 0) {
             char name[10] = {0};
             char action[10] = {0};
             if (sscanf((char *)local_buf, "[key,%9[^,],%9[^]]]", name, action) == 2) {
                 if (strcmp(action, "down") == 0) {
                     
-                    if (strcmp(name, "1") == 0) { // 鍒囨崲璋冭妭鐜?(闄愬埗鍦ㄩ潰鏉垮瓨鍦ㄧ殑PID鍐?
+                    if (strcmp(name, "1") == 0) { // 切换调节环 (限制在面板存在的PID内)
                         extern uint8_t OLED_View_Select;
                         if (OLED_View_Select == 1) {
-                            v_loop = (v_loop == 0) ? 1 : 0; // 娴嬭瘯鐪嬫澘浠匨1鍜孧2
+                            v_loop = (v_loop == 0) ? 1 : 0; // 测试看板仅展示 M1 和 M2
                         } else if (OLED_View_Select == 2) {
-                            v_loop = 2; // 浠匱urn
+                            v_loop = 2; // 从 Turn
                         } else if (OLED_View_Select == 5) {
                             v_loop = 0;
                         } else if (OLED_View_Select == 6) {
@@ -213,7 +208,7 @@ void Receive_Bluetooth_Data(void)
                         }
                         extern uint8_t Tuning_Loop;
                         Tuning_Loop = v_loop;
-                        v_param = 0; // 鍒囨崲鐜椂榛樿鍥炲埌Kp
+                        v_param = 0; // 切换环时默认回到 Kp
                     } else if (strcmp(name, "2") == 0) {
                         v_param = (v_param + 1) % 3;
                     } else if (strcmp(name, "9") == 0) {
@@ -273,14 +268,14 @@ void Receive_Bluetooth_Data(void)
                     else if (v_param == 2) curr_val = curr_pid->Kd;
                     
                     extern volatile uint16_t telemetry_pause_ms;
-                    telemetry_pause_ms = 3000; // 鏆傚仠娉㈠舰鍙戦€?绉掞紝浠ュ厤鍒峰睆
+                    telemetry_pause_ms = 3000; // 暂停波形发送 3 秒，以免刷屏
                     
                     sprintf(msg, "Sel: %s %s = %d.%02d\r\n", loop_names[v_loop], param_names[v_param], (int)curr_val, abs((int)(curr_val*100)%100));
                     BLE_send_String((unsigned char *)msg);
                 }
             }
         }
-        // 瑙ｆ瀽婊戞潌鎸囦护锛屾牸寮忎负 [slider,ID,VALUE]
+        // 解析滑杆指令，格式为 [slider,ID,VALUE]
         else if (strncmp((char *)local_buf, "[slider,", 8) == 0) {
             char slider_id[10] = {0};
             char slider_val_str[20] = {0};
@@ -317,7 +312,7 @@ void Receive_Bluetooth_Data(void)
                         Tuning_Mode = 1;
                     }
                     else {
-                        // 濡傛灉娌℃湁浣跨敤鐗瑰畾鐨?1, 2, 3 ID锛屽垯鎸夊師閫昏緫鍩轰簬褰撳墠 v_param 淇敼
+                        // 如果没有使用特定的 1, 2, 3 ID，则按原逻辑基于当前 v_param 修改
                         if (v_param == 0) {
                             target_pid->Kp = slider_val;
                         }
@@ -330,10 +325,10 @@ void Receive_Bluetooth_Data(void)
                     }
                 }
                 
-                // 鍥犱负婊戞潌鎷栧姩鏃朵細浜х敓娴烽噺楂橀鏁版嵁锛屽鏋滄瘡娆￠兘鍥炲浼氱灛闂存尋鐖嗚摑鐗欏彂閫侀€氶亾
-                // 鎵€浠ュ湪杩欓噷涓嶅洖澶?Sel 鏂囨湰锛屽彧榛橀粯淇敼鍙傛暟骞堕噸缃殏鍋滆鏃跺櫒
+                // 因为滑杆拖动时会产生海量高频数据，如果每次都回复会瞬间挤爆蓝牙发送通道
+                // 所以在这里不回复 Sel 文本，只默默修改参数并重置暂停计时器
                 extern volatile uint16_t telemetry_pause_ms;
-                telemetry_pause_ms = 3000; // 鏆傚仠娉㈠舰鍙戦€?绉掞紝浠ュ厤鍒峰睆
+                telemetry_pause_ms = 3000; // 暂停波形发送 3 秒，以免刷屏
             }
         }
         else {

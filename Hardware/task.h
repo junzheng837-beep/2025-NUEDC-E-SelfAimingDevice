@@ -24,8 +24,6 @@ extern uint8_t Task_2_State;
 extern float Start_Yaw;
 
 extern uint8_t Task_Select;
-extern uint8_t Task_1_State;
-extern uint8_t Task_2_State;
 extern uint8_t flag_state;
 extern uint8_t flag_cnt;
 extern uint8_t car_num;

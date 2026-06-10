@@ -1,6 +1,10 @@
 #include "app_lcd.h"
 #include "hw_lcd.h"
-#include "bsp_gyro.h"   // 引入陀螺仪结构体定义
+#include "bsp_gyro.h"
+#include "motor_ctrl.h"
+#include "task.h"
+#include "Encoder.h"
+#include "timer.h"
 
 // ================= 外部变量声明 =================
 extern float Basic_Speed;                                   // 目标基础速度
@@ -12,28 +16,19 @@ extern float Motor2_Speed;                                  // 右轮速度
 
 // 新增：任务状态与传感器变量
 extern uint16_t Huidu_Datas;                                 // 灰度原始数据 (12位)
-extern uint8_t Lap_Count;                                   // 当前跑的圈数 (来自task.c)
-extern uint8_t Lap_Count_2;
 
-// 🌟 只需要在这里补上这一行声明即可！
-extern Gyro_Struct *JY61P_Data;                             // 陀螺仪数据缓存指针
 extern float Debug_Yaw_Diff;  // 引入刚才在 task.c 定义的差值变量
 
 // ================= 脱机在线调参系统状态 =================
 uint8_t Tuning_Mode = 0;    // 0: 关闭调参, 1: 开启调参
 uint8_t Tuning_Cursor = 0;  // 0: Kp, 1: Ki, 2: Kd
 uint8_t Tuning_Loop = 0;    // 0: M1, 1: M2, ...
-// 其他环的目标值 (保留备用)
-extern float Target_Distance;
-extern float Target_Gyro;
-extern float Target_Angle;
 extern float Task1_Time_Sec;
 extern float Task2_Time_Sec;
-extern uint8_t Task_2_State; // 假设您有这个变量来判断任务状态
 // 引入在 Encoder.c 中计算的总路程
 extern float Measure_Distance;
 // ======================================================================
-// 1. 防死机底层打印库 (0 依赖，不爆 Flash)
+// 1. 底层字符串绘制函数库
 // ======================================================================
 void TFT_ShowBinNum(uint16_t x, uint16_t y, uint8_t num, uint16_t fc, uint16_t bc, uint8_t sizey) {
     char bin_str[9];
@@ -42,7 +37,7 @@ void TFT_ShowBinNum(uint16_t x, uint16_t y, uint8_t num, uint16_t fc, uint16_t b
     LCD_ShowString(x, y, (uint8_t*)bin_str, fc, bc, sizey, 0); 
 }
 
-// 专门显示 12 位二进制的函数 (给灰度用)
+// 12 位二进制数据显示函数
 void TFT_ShowBinNum12(uint16_t x, uint16_t y, uint16_t num, uint16_t fc, uint16_t bc, uint8_t sizey) {
     char bin_str[13];
     // 只取低 12 位循环
@@ -83,7 +78,7 @@ void TFT_ShowFloat(uint16_t x, uint16_t y, float val, uint16_t fc, uint16_t bc, 
     LCD_ShowString(x, y, (uint8_t*)buf, fc, bc, sizey, 0);
 }
 
-// 计算浮点数长度并完美居中显示
+// 浮点数居中显示函数
 void TFT_ShowFloatCenter(uint16_t rect_x, uint16_t rect_w, uint16_t rect_y, uint16_t rect_h, float val, uint16_t fc, uint16_t bc) {
     char buf[20]; int idx = 0;
     if (val < 0) { buf[idx++] = '-'; val = -val; } else { buf[idx++] = ' '; } 
@@ -109,7 +104,7 @@ void TFT_ShowFloatCenter(uint16_t rect_x, uint16_t rect_w, uint16_t rect_y, uint
 }
 
 // ======================================================================
-// 2. 完美复刻 app_ui.c 风格的绘图组件
+// 2. UI 组件绘制模块
 // ======================================================================
 
 static void UI_DrawTitleCenter(int y, uint16_t bg_color, const char* str) {
@@ -126,7 +121,7 @@ static void UI_DrawTitleCenter(int y, uint16_t bg_color, const char* str) {
     LCD_ShowChinese(center_x - str_center_x, y, (unsigned char*)str, WHITE, bg_color, 16, 1);
 }
 
-// 🌟 修改点：修改主界面的文字标签，使其对应新需求
+// 主界面仪表盘背景绘制
 static void Draw_Dashboard_Background(void) {
     LCD_Fill(0, 0, LCD_W, LCD_H, BLACK);
     UI_DrawTitleCenter(10, BLUE, "系统综合看板");
@@ -145,7 +140,7 @@ static void Draw_Dashboard_Background(void) {
     LCD_ShowChinese(167, 105, (uint8_t *)"左轮速:", WHITE, GRAYBLUE, 16, 1);
     LCD_ShowChinese(167, 135, (uint8_t *)"右轮速:", WHITE, GRAYBLUE, 16, 1);
 
-    // 🌟 新增：表格分割线 (Grid)
+    //  新增：表格分割线 (Grid)
     LCD_DrawLine(10, 68, 155, 68, DARKBLUE);
     LCD_DrawLine(10, 98, 155, 98, DARKBLUE);
     LCD_DrawLine(10, 128, 155, 128, DARKBLUE);
@@ -158,21 +153,21 @@ static void Draw_Dashboard_Page2_Background(void) {
     LCD_Fill(0, 0, LCD_W, LCD_H, BLACK);
     UI_DrawTitleCenter(10, BLUE, "循迹PID看板");
 
-    // 左侧圆角方块：重新排版放入4行数据
-    LCD_ArcRect(10, 40, 160, 160, GRAYBLUE); // 扩宽一点防止长数字顶出边界
+    // 左侧信息区域绘制
+    LCD_ArcRect(10, 40, 160, 160, GRAYBLUE); // 调整边框宽度以适配数据长度
     LCD_ShowChinese(15, 45,  (uint8_t *)"循迹Kp:", GREEN, GRAYBLUE, 16, 1);
     LCD_ShowChinese(15, 75,  (uint8_t *)"循迹Ki:", WHITE, GRAYBLUE, 16, 1); 
     LCD_ShowChinese(15, 105, (uint8_t *)"循迹Kd:", WHITE, GRAYBLUE, 16, 1);
     LCD_ShowChinese(15, 135, (uint8_t *)"基础速:", WHITE, GRAYBLUE, 16, 1);
 
-    // 右侧圆角方块：重新排版放入4行数据
+    // 右侧信息区域绘制
     LCD_ArcRect(165, 40, 310, 160, GRAYBLUE);
     LCD_ShowChinese(167, 45,  (uint8_t *)"偏航角:", YELLOW, GRAYBLUE, 16, 1); 
     LCD_ShowChinese(167, 75,  (uint8_t *)"灰度:", CYAN,  GRAYBLUE, 16, 1); 
     LCD_ShowChinese(167, 105, (uint8_t *)"左轮速:", WHITE, GRAYBLUE, 16, 1); 
     LCD_ShowChinese(167, 135, (uint8_t *)"右轮速:", WHITE, GRAYBLUE, 16, 1); 
 
-    // 🌟 新增：表格分割线 (Grid)
+    //  新增：表格分割线 (Grid)
     LCD_DrawLine(10, 68, 155, 68, DARKBLUE);
     LCD_DrawLine(10, 98, 155, 98, DARKBLUE);
     LCD_DrawLine(10, 128, 155, 128, DARKBLUE);
@@ -185,21 +180,21 @@ static void Draw_Dashboard_Page3_Background(void) {
     LCD_Fill(0, 0, LCD_W, LCD_H, BLACK);
     UI_DrawTitleCenter(10, BLUE, "测试PID看板");
 
-    // 左侧圆角方块：重新排版放下4行数据
-    LCD_ArcRect(10, 40, 160, 160, GRAYBLUE); // 扩宽一点防止长数字顶出边界
+    // 左侧信息区域绘制
+    LCD_ArcRect(10, 40, 160, 160, GRAYBLUE); // 调整边框宽度以适配数据长度
     LCD_ShowString(15, 45,  (uint8_t *)"M1 Kp:", GREEN, GRAYBLUE, 16, 1);
     LCD_ShowString(15, 75,  (uint8_t *)"M1 Ki:", WHITE, GRAYBLUE, 16, 1); 
     LCD_ShowString(15, 105, (uint8_t *)"M1 Kd:", WHITE, GRAYBLUE, 16, 1);
     LCD_ShowChinese(15, 135, (uint8_t *)"左轮速:", YELLOW, GRAYBLUE, 16, 1);
 
-    // 右侧圆角方块：重新排版放4行数据
+    // 右侧信息区域绘制
     LCD_ArcRect(165, 40, 310, 160, GRAYBLUE);
     LCD_ShowString(167, 45,  (uint8_t *)"M2 Kp:", GREEN, GRAYBLUE, 16, 1); 
     LCD_ShowString(167, 75,  (uint8_t *)"M2 Ki:", WHITE, GRAYBLUE, 16, 1); 
     LCD_ShowString(167, 105, (uint8_t *)"M2 Kd:", WHITE, GRAYBLUE, 16, 1); 
     LCD_ShowChinese(167, 135, (uint8_t *)"右轮速:", YELLOW, GRAYBLUE, 16, 1); 
 
-    // 🌟 新增：表格分割线 (Grid)
+    //  新增：表格分割线 (Grid)
     LCD_DrawLine(10, 68, 155, 68, DARKBLUE);
     LCD_DrawLine(10, 98, 155, 98, DARKBLUE);
     LCD_DrawLine(10, 128, 155, 128, DARKBLUE);
@@ -255,7 +250,7 @@ void Update_App_UI_PID_Values(float kp, float ki, float kd) {
     TFT_ShowFloatCenter(202, 70, 95, 24, kd, YELLOW, BLUE);
 }
 
-// 🌟 新增：速度迷你进度条
+//  新增：速度迷你进度条
 static void Draw_Speed_Bar(int x, int y, float speed) {
     int max_speed = 50; 
     int bar_width = 80;
@@ -284,7 +279,7 @@ void LCD_Show_Proc(void)
     static uint8_t last_tuning_loop = 255;
     static uint8_t last_tuning_cursor = 255;
 
-    // 1. 静态背景层 (界面切换时画一次，拒绝闪屏)
+    // 1. 静态背景层绘制 (仅在界面切换时刷新)
     if(last_view != OLED_View_Select) {
         // 界面切换时，重置边框绘制记录，强制下一次绘制新边框
         last_tuning_mode = 255; 
@@ -305,11 +300,11 @@ void LCD_Show_Proc(void)
         last_view = OLED_View_Select;
     }
 
-    // 2. 动态数据层 (高刷写入)
+    // 2. 动态数据层持续刷新
     switch(OLED_View_Select)
     {
         case 3: {
-            // 🌟 新增：动态颜色报警计算
+            //  新增：动态颜色报警计算
             uint16_t yaw_color = GREEN;
             if(Debug_Yaw_Diff > 20 || Debug_Yaw_Diff < -20) yaw_color = RED;
             else if(Debug_Yaw_Diff > 10 || Debug_Yaw_Diff < -10) yaw_color = YELLOW;
@@ -326,7 +321,7 @@ void LCD_Show_Proc(void)
             TFT_ShowFloat(225, 105, Motor1_Speed, WHITE, GRAYBLUE, 16);
             TFT_ShowFloat(225, 135, Motor2_Speed, WHITE, GRAYBLUE, 16);
             
-            // 🌟 新增：绘制进度条 (位于文字下方空白处)
+            //  新增：绘制进度条 (位于文字下方空白处)
             Draw_Speed_Bar(225, 124, Motor1_Speed);
             Draw_Speed_Bar(225, 154, Motor2_Speed);
             break;
@@ -338,7 +333,7 @@ void LCD_Show_Proc(void)
             else if(Debug_Yaw_Diff > 10 || Debug_Yaw_Diff < -10) yaw_color = YELLOW;
 
             // ================= 左侧：循迹 PID (pid_Turn) =================
-            // 绘制动态调参选择框 (仅在状态发生变化时才通过SPI绘制，极大降低卡死风险)
+            // 动态调参选择框绘制
             if (Tuning_Mode != last_tuning_mode || Tuning_Cursor != last_tuning_cursor) {
                 last_tuning_mode = Tuning_Mode;
                 last_tuning_cursor = Tuning_Cursor;
@@ -368,7 +363,7 @@ void LCD_Show_Proc(void)
             TFT_ShowFloat(225, 105, Motor1_Speed, WHITE, GRAYBLUE, 16);
             TFT_ShowFloat(225, 135, Motor2_Speed, WHITE, GRAYBLUE, 16);
             
-            // 🌟 新增：绘制进度条
+            //  新增：绘制进度条
             Draw_Speed_Bar(225, 124, Motor1_Speed);
             Draw_Speed_Bar(225, 154, Motor2_Speed);
             break;
@@ -376,7 +371,7 @@ void LCD_Show_Proc(void)
 
         case 1: {
             // ================= 左侧：M1 PID，右侧：M2 PID =================
-            // 绘制动态调参选择框 (仅在状态发生变化时才通过SPI绘制，极大降低卡死风险)
+            // 动态调参选择框绘制
             if (Tuning_Mode != last_tuning_mode || Tuning_Loop != last_tuning_loop || Tuning_Cursor != last_tuning_cursor) {
                 last_tuning_mode = Tuning_Mode;
                 last_tuning_loop = Tuning_Loop;
@@ -447,7 +442,7 @@ void LCD_Show_Proc(void)
             TFT_ShowFloat(225, 105, pid_Motor2_Speed.Kd, (Tuning_Mode && Tuning_Loop == 1 && Tuning_Cursor == 2) ? YELLOW : WHITE, GRAYBLUE, 16);
             TFT_ShowFloat(225, 135, Motor2_Speed, WHITE, GRAYBLUE, 16);
             
-            // 🌟 绘制进度条
+            //  绘制进度条
             Draw_Speed_Bar(72, 154, Motor1_Speed);
             Draw_Speed_Bar(225, 154, Motor2_Speed);
             break;

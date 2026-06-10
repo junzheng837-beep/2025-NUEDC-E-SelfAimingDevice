@@ -1,7 +1,7 @@
 # FIXED
 
 Hardware/smd.o: ../Hardware/smd.c ../Hardware/smd.h \
- E:/TI_Files/DS_E03_Show06/main.h \
+ E:/TI_Files/DS_E03_Show06\ copy/main.h \
  ti_msp_dl_config.h \
  E:/TI_02/CCS/mspm0_sdk_2_05_01_00/source/ti/devices/msp/msp.h \
  E:/TI_02/CCS/mspm0_sdk_2_05_01_00/source/ti/devices/DeviceFamily.h \
@@ -76,12 +76,12 @@ Hardware/smd.o: ../Hardware/smd.c ../Hardware/smd.h \
  E:/TI_02/CCS/mspm0_sdk_2_05_01_00/source/ti/driverlib/dl_wwdt.h \
  E:/TI_02/CCS/mspm0_sdk_2_05_01_00/source/ti/driverlib/m0p/dl_interrupt.h \
  E:/TI_02/CCS/mspm0_sdk_2_05_01_00/source/ti/driverlib/m0p/dl_systick.h \
- E:/TI_Files/DS_E03_Show06/middle/delay.h \
- E:/TI_Files/DS_E03_Show06/Hardware/process_frame.h \
- E:/TI_Files/DS_E03_Show06/Hardware/smd.h \
- E:/TI_Files/DS_E03_Show06/middle/usart.h
+ E:/TI_Files/DS_E03_Show06\ copy/middle/delay.h \
+ E:/TI_Files/DS_E03_Show06\ copy/Hardware/process_frame.h \
+ E:/TI_Files/DS_E03_Show06\ copy/Hardware/smd.h \
+ E:/TI_Files/DS_E03_Show06\ copy/middle/usart.h
 ../Hardware/smd.h:
-E:/TI_Files/DS_E03_Show06/main.h:
+E:/TI_Files/DS_E03_Show06\ copy/main.h:
 ti_msp_dl_config.h:
 E:/TI_02/CCS/mspm0_sdk_2_05_01_00/source/ti/devices/msp/msp.h:
 E:/TI_02/CCS/mspm0_sdk_2_05_01_00/source/ti/devices/DeviceFamily.h:
@@ -156,7 +156,7 @@ E:/TI_02/CCS/mspm0_sdk_2_05_01_00/source/ti/driverlib/dl_vref.h:
 E:/TI_02/CCS/mspm0_sdk_2_05_01_00/source/ti/driverlib/dl_wwdt.h:
 E:/TI_02/CCS/mspm0_sdk_2_05_01_00/source/ti/driverlib/m0p/dl_interrupt.h:
 E:/TI_02/CCS/mspm0_sdk_2_05_01_00/source/ti/driverlib/m0p/dl_systick.h:
-E:/TI_Files/DS_E03_Show06/middle/delay.h:
-E:/TI_Files/DS_E03_Show06/Hardware/process_frame.h:
-E:/TI_Files/DS_E03_Show06/Hardware/smd.h:
-E:/TI_Files/DS_E03_Show06/middle/usart.h:
+E:/TI_Files/DS_E03_Show06\ copy/middle/delay.h:
+E:/TI_Files/DS_E03_Show06\ copy/Hardware/process_frame.h:
+E:/TI_Files/DS_E03_Show06\ copy/Hardware/smd.h:
+E:/TI_Files/DS_E03_Show06\ copy/middle/usart.h:

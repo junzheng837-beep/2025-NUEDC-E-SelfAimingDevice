@@ -7,7 +7,6 @@
 #include "key.h"
 #include "delay.h"
 #include "timer.h"
-// #include "mpu6050.h"
 #include "bsp_gyro.h"
 #include "smd.h"
 #include "process_frame.h"
@@ -39,7 +38,7 @@ void Task_Scheduler(void)
                 MOTOR2_ENABLE_FLAG = 1;
                 Basic_Speed = Target_Speed_Test;
             } else {
-                // 待机模式：统一关闭电机，防止乱跑
+                // 待机模式：统一关闭电机使能，确保静止
                 MOTOR1_ENABLE_FLAG = 0; 
                 MOTOR2_ENABLE_FLAG = 0;
                 Basic_Speed = 0;
@@ -47,11 +46,11 @@ void Task_Scheduler(void)
             break;
             
         case 1:
-            Task_1(); // 只有 Task_Mode == 1 时，任务一才有资格运行
+            Task_1(); // 调用任务一状态机
             break;
             
         case 2:
-            Task_2(); // 只有 Task_Mode == 2 时，任务二才有资格运行
+            Task_2(); // 调用任务二状态机
             break;
             
         default:
@@ -168,18 +167,18 @@ void Task_1(void)
                     Task_1_State = 3; 
                 }
             }
-            // 👇================ 新增：终点前预判减速逻辑 ================👇
-            // 终点是 710 度，我们提前约 60度 (大概终点前 15~20 厘米) 开始强制拉刹车
+            // ================ 新增：终点前预判减速逻辑 ================
+            // 终点阈值 710 度，提前约 60 度开始强制减速逻辑
             if (diff >= 680.0f && diff < 710.0f) 
             {
-                Basic_Speed = 10; // 强行把基础速度降到 15 (爬行速度过线)
+                Basic_Speed = 10; // 降低基础速度以确保平稳越线
                 
-                // 【极其关键】：65高速下用的狂暴 PID 放到 15 的低速下，会让车子剧烈摇摆画龙！
-                // 所以减速的同时，必须把 PID 的 P 和 D 压下来，让它平稳滑行过终点。
-                pid_Turn.Kp = 2.5f;   // 降回平稳的 P (可微调 2.0~3.0)
-                pid_Turn.Kd = 100.0f; // 降回平稳的 D (可微调 80~150)
+                // 关键逻辑：低速下需降低 PID 参数以防止车体剧烈震荡
+                // 平滑减小 PID P与D 参数，保证滑行稳定
+                pid_Turn.Kp = 2.5f;   // 恢复为平稳控制的 Kp 值
+                pid_Turn.Kd = 100.0f; // 恢复为平稳控制的 Kd 值
             }
-            // 👆==========================================================👆
+            // ==========================================================
         }
     }
 
@@ -214,12 +213,12 @@ void Task_1(void)
             MOTOR1_ENABLE_FLAG = 1; 
             MOTOR2_ENABLE_FLAG = 1; 
             
-           // 🌟🌟🌟 把 P 和 D 直接翻倍甚至数倍！
-            pid_Turn.Kp = 6.0;   // 【重拳 P】：从 1.7 提高到 5.0~8.0 左右。强行克服前轮僵硬！
+           // 提高 P 和 D 参数以增强循迹响应
+            pid_Turn.Kp = 6.0;   // 增大 P 参数，克服前轮摩擦力僵硬现象
             pid_Turn.Ki = 0.0;  
-            pid_Turn.Kd = 400.0; // 【爆破 D】：遇到黑线瞬间，给电机几百的差速值，把车头生生砸回去！
+            pid_Turn.Kd = 400.0; // 增大 D 参数，遇到偏差瞬间产生大阻尼快速纠正车头
             
-            // 彻底清空你在摆放时积攒的垃圾数据！
+            // 启动前清空 PID 历史误差累积数据，防止初始误判
             pid_Turn.KpOut = 0;
             pid_Turn.KiOut = 0;
             pid_Turn.KdOut = 0;
@@ -233,7 +232,8 @@ void Task_1(void)
             Gyro_PID_Flag = 0;
             Angle_PID_Flag = 0;
             
-            Basic_Speed = 25;    // 先用中低速测试，一旦它能咬住线了，再提速。              Task1_Time_Sec = 0.0f; // 重置计时
+            Basic_Speed = 25;    // 设置初始测试速度并重置计时器
+            Task1_Time_Sec = 0.0f; // 重置计时
             Task_1_State = 2; // 进入行驶
             break;
 
@@ -303,18 +303,18 @@ void Task_2(void)
                     Task_2_State = 3; 
                 }
             }
-            // 👇================ 新增：终点前预判减速逻辑 ================👇
-            // 终点是 710 度，我们提前约 60度 (大概终点前 15~20 厘米) 开始强制拉刹车
+            // ================ 新增：终点前预判减速逻辑 ================
+            // 终点阈值 710 度，提前约 60 度开始强制减速逻辑
             if (diff >= 325.0f && diff < 355.0f) 
             {
-                Basic_Speed = 10; // 强行把基础速度降到 15 (爬行速度过线)
+                Basic_Speed = 10; // 降低基础速度以确保平稳越线
                 
-                // 【极其关键】：65高速下用的狂暴 PID 放到 15 的低速下，会让车子剧烈摇摆画龙！
-                // 所以减速的同时，必须把 PID 的 P 和 D 压下来，让它平稳滑行过终点。
-                pid_Turn.Kp = 2.5f;   // 降回平稳的 P (可微调 2.0~3.0)
-                pid_Turn.Kd = 100.0f; // 降回平稳的 D (可微调 80~150)
+                // 关键逻辑：低速下需降低 PID 参数以防止车体剧烈震荡
+                // 平滑减小 PID P与D 参数，保证滑行稳定
+                pid_Turn.Kp = 2.5f;   // 恢复为平稳控制的 Kp 值
+                pid_Turn.Kd = 100.0f; // 恢复为平稳控制的 Kd 值
             }
-            // 👆==========================================================👆
+            // ==========================================================
         }
     }
 
@@ -343,11 +343,11 @@ void Task_2(void)
             MOTOR1_ENABLE_FLAG = 1; 
             MOTOR2_ENABLE_FLAG = 1; 
             
-            pid_Turn.Kp = 6.0;   // 【重拳 P】：从 1.7 提高到 5.0~8.0 左右。强行克服前轮僵硬！
+            pid_Turn.Kp = 6.0;   // 增大 P 参数，克服前轮摩擦力僵硬现象
             pid_Turn.Ki = 0.0;  
-            pid_Turn.Kd = 400.0; // 【爆破 D】：遇到黑线瞬间，给电机几百的差速值，把车头生生砸回去！
+            pid_Turn.Kd = 400.0; // 增大 D 参数，遇到偏差瞬间产生大阻尼快速纠正车头
             
-            // 彻底清空你在摆放时积攒的垃圾数据！
+            // 启动前清空 PID 历史误差累积数据，防止初始误判
             pid_Turn.KpOut = 0;
             pid_Turn.KiOut = 0;
             pid_Turn.KdOut = 0;
@@ -361,7 +361,7 @@ void Task_2(void)
             Gyro_PID_Flag = 0;
             Angle_PID_Flag = 0;
             
-            Basic_Speed = 25;    // 【修改点】：降速！后驱推着跑极易失控，先用 30 甚至 20 的低速把环调通，再慢慢加速。
+            Basic_Speed = 25;    // 设置低速以保证初次循迹稳定性，后续可逐步提速
             Task2_Time_Sec = 0.0f; // 重置计时
             Task_2_State = 2; // 进入行驶
             break;
