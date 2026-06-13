@@ -1,5 +1,5 @@
 #include "Encoder.h"
-
+#include "bsp_sr04.h"
 int32_t Motor1_Encoder_Value = 0;
 int32_t Motor2_Encoder_Value = 0;
 
@@ -12,7 +12,14 @@ float Measure_Distance = 0;
 // 外部中断读取编码器脉冲值
 void GROUP1_IRQHandler(void){
 	if(DL_Interrupt_getStatusGroup(DL_INTERRUPT_GROUP_1,DL_INTERRUPT_GROUP1_GPIOA)){
-		uint32_t Encoder_GPIO_Int = DL_GPIO_getEnabledInterruptStatus(Encoder_PORT,Encoder_A_PIN | Encoder_B_PIN | Encoder_C_PIN | Encoder_D_PIN);
+		uint32_t Encoder_GPIO_Int = DL_GPIO_getEnabledInterruptStatus(GPIOA, 0xFFFFFFFF);
+        
+        // --- SR04 Hook ---
+        if ((Encoder_GPIO_Int & SR04_ECHO_PIN) == SR04_ECHO_PIN){
+            DL_GPIO_clearInterruptStatus(SR04_PORT, SR04_ECHO_PIN);
+            SR04_ECHO_IRQHandler();
+        }
+        // -----------------
 		
 		// 通道1 左轮A相
 		if ((Encoder_GPIO_Int & Encoder_A_PIN) == Encoder_A_PIN){

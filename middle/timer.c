@@ -36,6 +36,9 @@ volatile uint8_t flag_50ms_telemetry = 0;
 volatile uint8_t flag_50ms_lcd = 0;
 volatile uint16_t telemetry_pause_ms = 0;
 
+volatile uint8_t flag_100ms_sr04 = 0;
+float Global_Ultrasonic_Distance = 0.0f;
+
 float Task1_Time_Sec = 0.0f; // 任务一用时
 float Task2_Time_Sec = 0.0f; // 任务二用时
 float Task1_Dist = 0.0f;     // 任务一当前路程
@@ -100,7 +103,7 @@ void TIMER_0_INST_IRQHandler(void)
             if (++count_100ms >= 100) 
             {
                 count_100ms = 0;
-                // 100ms定时处理逻辑可在此添加
+                flag_100ms_sr04 = 1; // 通知主循环读取超声波
             }
              
             // 1000ms 周期任务处理
@@ -251,6 +254,10 @@ static void Timer_10ms_Control_Task(void)
         {
             lost_line_cnt = 0; // 只要看到线，立马清零防抖计数
 
+            // 软启动平滑过度
+            if (Soft_Basic_Speed < Basic_Speed) Soft_Basic_Speed += 0.5f;
+            else if (Soft_Basic_Speed > Basic_Speed) Soft_Basic_Speed -= 0.5f;
+
             if (Turn_PID_Flag == 1) 
             {
                 target_turn = PID_Calculate(&pid_Turn, Huidu_Error, 0); 
@@ -372,8 +379,8 @@ void NVIC_EnableIRQ_Init(void)
     // 启动定时器A计数
     DL_TimerG_startCounter(TIMER_0_INST);
     
-    // 编码器中断使能
-    NVIC_EnableIRQ(Encoder_INT_IRQN);
+    // 编码器/超声波 (PORTA) 中断使能
+    NVIC_EnableIRQ(GPIOA_INT_IRQn);
     
     // 陀螺仪中断使能（如果需要）
     // NVIC_EnableIRQ(MPU6050_INT_IRQN);

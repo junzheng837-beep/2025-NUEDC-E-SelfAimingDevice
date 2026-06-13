@@ -5,6 +5,7 @@
 #include "task.h"
 #include "Encoder.h"
 #include "timer.h"
+#include "bsp_sr04.h"
 
 // ================= 外部变量声明 =================
 extern float Basic_Speed;                                   // 目标基础速度
@@ -18,6 +19,7 @@ extern float Motor2_Speed;                                  // 右轮速度
 extern uint16_t Huidu_Datas;                                 // 灰度原始数据 (12位)
 
 extern float Debug_Yaw_Diff;  // 引入刚才在 task.c 定义的差值变量
+extern float Global_Ultrasonic_Distance;
 
 // ================= 脱机在线调参系统状态 =================
 uint8_t Tuning_Mode = 0;    // 0: 关闭调参, 1: 开启调参
@@ -445,6 +447,11 @@ void LCD_Show_Proc(void)
             //  绘制进度条
             Draw_Speed_Bar(72, 154, Motor1_Speed);
             Draw_Speed_Bar(225, 154, Motor2_Speed);
+            
+            // 临时在左上角/顶栏显示超声波距离
+            TFT_ShowFloat(80, 10, Global_Ultrasonic_Distance, WHITE, BLACK, 16);
+            LCD_ShowString(150, 10, (uint8_t *)"cm", GREEN, BLACK, 16, 0);
+
             break;
         }
 

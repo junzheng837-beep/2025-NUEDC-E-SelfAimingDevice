@@ -305,7 +305,7 @@ void Mobile_sendData_UART1(float a, float b, float c)
     int int_c = (int)c;
     int frac_c = (int)((c - int_c) * 100);
     
-    sprintf(send_buf, "[plot,%s%d.%02d,%s%d.%02d,%s%d.%02d]", 
+    sprintf(send_buf, "[plot,%s%d.%02d,%s%d.%02d,%s%d.%02d]\r\n", 
             sign_a, int_a, frac_a, 
             sign_b, int_b, frac_b, 
             sign_c, int_c, frac_c);

@@ -18,7 +18,7 @@
 #include "app_protocol.h"
 #include "bsp_gyro.h"
 #include "bsp_hc05.h"
-
+#include "bsp_sr04.h"
 /*-------------------------------------------------------------------------------------------*/
 /*-------------------------------------自定义变量--------------------------------------------*/
 /*-------------------------------------------------------------------------------------------*/
@@ -32,6 +32,8 @@ Gyro_Struct *JY61P_Data;
 
 extern volatile uint8_t flag_5ms_gyro_read;
 extern uint8_t flag_1s_printf;
+extern volatile uint8_t flag_100ms_sr04;
+extern float Global_Ultrasonic_Distance;
 
 void LCD_Init(void);
 void PD42S1_Init(void);
@@ -48,6 +50,7 @@ int main(void)
     jy61pInit();//陀螺仪初始化
     LCD_Init();//屏幕初始化（实际使用TFT屏幕）
     Bluetooth_Init(); // 蓝牙初始化
+    SR04_Init();      // 超声波初始化
     PD42S1_Init();// 电机相关的初始化 (如果你的smd.c里有初始化函数的话)
     while (1)
     {
@@ -56,6 +59,12 @@ int main(void)
         {
             flag_5ms_gyro_read = 0;
             JY61P_Data = get_angle();
+        }
+
+        if (flag_100ms_sr04)
+        {
+            flag_100ms_sr04 = 0;
+            Global_Ultrasonic_Distance = SR04_GetLength();
         }
 
         KEY_PROC();
