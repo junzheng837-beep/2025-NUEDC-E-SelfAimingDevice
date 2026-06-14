@@ -181,6 +181,8 @@ void KEY_PROC(void)
     }
     else if(Key[2].Double_Flag==1)
     {
+        extern void BLE_send_String(unsigned char *str);
+        BLE_send_String((unsigned char *)"[START_TUNE]\r\n");
         Key[2].Double_Flag=0;
     }
     

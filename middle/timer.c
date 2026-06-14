@@ -21,6 +21,24 @@
 uint16_t count_10ms = 0;
 uint16_t count_100ms = 0;
 uint16_t t = 0;
+volatile uint32_t ms_ticks = 0;
+
+uint32_t get_micros(void) {
+    uint32_t ms = ms_ticks;
+    uint32_t count = DL_TimerG_getTimerCount(TIMER_0_INST);
+    
+    // Use getRawInterruptStatus to check without clearing the hardware flag!
+    if (DL_TimerG_getRawInterruptStatus(TIMER_0_INST, DL_TIMERG_INTERRUPT_ZERO_EVENT)) {
+        count = DL_TimerG_getTimerCount(TIMER_0_INST);
+        ms++;
+    } else if (ms != ms_ticks) {
+        ms = ms_ticks;
+        count = DL_TimerG_getTimerCount(TIMER_0_INST);
+    }
+    
+    return (ms * 1000) + (count * 1000) / 625;
+}
+
 
 volatile float Target_ChaSu;        // 目标差速
 volatile float Motor1_Target_Speed; // 左边电机目标速度
@@ -77,6 +95,7 @@ void TIMER_0_INST_IRQHandler(void)
     {
         case DL_TIMER_IIDX_ZERO: // TIMG 的加载归零中断标志是 IIDX_ZERO
         {
+            ms_ticks++;
             ble_rx_idle_cnt++;
             
             if (telemetry_pause_ms > 0) 
@@ -225,8 +244,10 @@ static void Timer_10ms_Control_Task(void)
         if (sync_comp < -3.0f) sync_comp = -3.0f;
 
         // 5. 下发控制：在完美对称的旋转差速上，叠加抵抗瞬间滑移的拉力
-        target_speed_1 = target_turn - sync_comp; 
-        target_speed_2 = -target_turn - sync_comp; 
+        // 原先 M1是右，M2是左。现在 M1是左，M2是右。
+        // 为了保持和以前一样的物理转向方向，必须交换它们的公式。
+        target_speed_1 = -target_turn - sync_comp; 
+        target_speed_2 = target_turn - sync_comp; 
     }
     else // 其他模式 (如 Run_Mode / 循迹模式)
     {
@@ -237,7 +258,8 @@ static void Timer_10ms_Control_Task(void)
         static uint8_t lost_line_cnt = 0; 
         
         // 循迹模式下的悬空保护逻辑 (加入防抖滤除颠簸)
-        if (Huidu_Datas == 0xFFF) 
+        // 在测速模式下，强制屏蔽灰度悬空保护
+        if (Huidu_Datas == 0xFFF && Test_Speed_Mode == 0) 
         {
             lost_line_cnt++;
             // 连续多次检测到全白状态，判定为彻底丢线或悬空
@@ -261,23 +283,69 @@ static void Timer_10ms_Control_Task(void)
             if (Turn_PID_Flag == 1) 
             {
                 target_turn = PID_Calculate(&pid_Turn, Huidu_Error, 0); 
-
+                
                 // 解除封印：保证救车差速能发挥最大作用
                 float max_turn = 120.0f; 
                 if (target_turn > max_turn)  target_turn = max_turn;
                 if (target_turn < -max_turn) target_turn = -max_turn;
             }
 
+            // 修正极性：M1定为左轮，正数为前进。
+            // 当偏左时（黑线在右，Huidu_Error为正，target_turn为负），左轮(M1)必须减速，右轮(M2)必须加速。
             target_speed_1 = Soft_Basic_Speed - target_turn; 
             target_speed_2 = Soft_Basic_Speed + target_turn;
         }
     }
 
     // 测试模式下的强制速度设定
+    static float Test_Soft_Speed = 0.0f;
+    static float locked_yaw = 0.0f;
+    static uint8_t gyro_lock_init = 0;
+
     if (Test_Speed_Mode == 1) 
     {
-        target_speed_1 = Target_Speed_Test;
-        target_speed_2 = Target_Speed_Test;
+        // 恢复软启动，避免起步打滑
+        if (Test_Soft_Speed < Target_Speed_Test) Test_Soft_Speed += 0.6f;
+        else if (Test_Soft_Speed > Target_Speed_Test) Test_Soft_Speed -= 0.6f;
+        
+        if (Target_Speed_Test != 0 && JY61P_Data != NULL) 
+        {
+            if (gyro_lock_init == 0) 
+            {
+                locked_yaw = JY61P_Data->total_z; // 锁定起步瞬间的车头航向角
+                gyro_lock_init = 1;
+                // 清理陀螺仪 PID 历史积分
+                pid_Gyro.KiOut = 0;
+                pid_Gyro.PID_Out = 0;
+                pid_Gyro.Error[0] = 0;
+                pid_Gyro.Error[1] = 0;
+                pid_Gyro.Error[2] = 0;
+            }
+            // 计算航向补偿（P 和 D 用于抵抗偏航）
+            float turn_comp = PID_Calculate(&pid_Gyro, JY61P_Data->total_z, locked_yaw);
+            
+            // 限制最大补偿量，防止车身剧烈晃动
+            if (turn_comp > 15.0f) turn_comp = 15.0f;
+            if (turn_comp < -15.0f) turn_comp = -15.0f;
+            
+            // 注意：此时我们已经将物理和代码完美对应，M1 就是左轮，M2 就是右轮。
+            // 当车头向右偏时，陀螺仪 Z 轴角度减小，计算出的 turn_comp 为正数。
+            // 此时必须让左轮(M1)减速，右轮(M2)加速，才能让车头向左回正。
+            // 也就是 M1 = 基础 - turn_comp(正数)，M2 = 基础 + turn_comp(正数)
+            target_speed_1 = Test_Soft_Speed - turn_comp;
+            target_speed_2 = Test_Soft_Speed + turn_comp;
+        }
+        else 
+        {
+            gyro_lock_init = 0;
+            target_speed_1 = Test_Soft_Speed;
+            target_speed_2 = Test_Soft_Speed;
+        }
+    }
+    else 
+    {
+        Test_Soft_Speed = 0.0f; // 退出测试模式时清零
+        gyro_lock_init = 0;
     }
     
     // 统一执行速度环 PID 并输出给直流电机

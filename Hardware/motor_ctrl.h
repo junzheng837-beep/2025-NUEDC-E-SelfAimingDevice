@@ -42,13 +42,13 @@ void Set_PID_Param(pid_t *pid, float P, float I,float D);
 #define BIN1(x)   x?DL_GPIO_setPins(Motor_Ctrl_BIN1_PORT, Motor_Ctrl_BIN1_PIN):DL_GPIO_clearPins(Motor_Ctrl_BIN1_PORT, Motor_Ctrl_BIN1_PIN)
 #define BIN2(x)   x?DL_GPIO_setPins(Motor_Ctrl_BIN2_PORT, Motor_Ctrl_BIN2_PIN):DL_GPIO_clearPins(Motor_Ctrl_BIN2_PORT, Motor_Ctrl_BIN2_PIN)
 
-#define Motor1_Forward()	{AIN1(0);AIN2(1);}
-#define Motor1_Backward()	{AIN1(1);AIN2(0);}
-#define Motor1_Stop()		{AIN1(0);AIN2(0);}
+#define Motor1_Forward()	{BIN1(0);BIN2(1);}
+#define Motor1_Backward()	{BIN1(1);BIN2(0);}
+#define Motor1_Stop()		{BIN1(0);BIN2(0);}
 
-#define Motor2_Forward()	{BIN1(0);BIN2(1);}
-#define Motor2_Backward()	{BIN1(1);BIN2(0);}
-#define Motor2_Stop()		{BIN1(0);BIN2(0);}
+#define Motor2_Forward()	{AIN1(0);AIN2(1);}
+#define Motor2_Backward()	{AIN1(1);AIN2(0);}
+#define Motor2_Stop()		{AIN1(0);AIN2(0);}
 
 void Set_Motor1_Speed(int Target_Speed);
 void Set_Motor2_Speed(int Target_Speed);

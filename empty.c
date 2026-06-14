@@ -87,7 +87,7 @@ int main(void)
             extern volatile uint16_t telemetry_pause_ms;
             extern volatile uint8_t telemetry_enabled;
             
-            if (telemetry_pause_ms == 0 && telemetry_enabled == 1) {
+            if (telemetry_pause_ms == 0 && (telemetry_enabled == 1 || Test_Speed_Mode == 1)) {
                 float yaw_to_send = Debug_Yaw_Diff;
                 if (Test_Speed_Mode == 1) {
                     yaw_to_send = Target_Speed_Test;

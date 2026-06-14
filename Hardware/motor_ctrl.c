@@ -21,9 +21,9 @@ extern uint8_t K230_Ctrl_Mode;
 
 // 速度环参数
 pid_t pid_Motor1_Speed = {
-    .Kp = 80.0f,
-    .Ki = 1.0f,
-    .Kd = 0.0f,
+    .Kp = 1.500f,  // 左右轮参数统一，消除它们数学响应上的“性格差异”
+    .Ki = 1.400f,
+    .Kd = 0.040f,
     .Target = 0,
     .Measure = 0,
     {0, 0, 0},
@@ -36,9 +36,9 @@ pid_t pid_Motor1_Speed = {
 };
 
 pid_t pid_Motor2_Speed = {
-    .Kp = 80.0f,
-    .Ki = 1.0f,
-    .Kd = 0.0f,
+    .Kp = 1.500f,  // 左右轮参数统一，消除它们数学响应上的“性格差异”
+    .Ki = 1.400f,
+    .Kd = 0.040f,
     .Target = 0,
     .Measure = 0,
     {0, 0, 0},
@@ -84,9 +84,9 @@ pid_t pid_Distance = {
 
 // 角速度环参数
 pid_t pid_Gyro = {
-    .Kp = 2.0f,
-    .Ki = 0.05f,
-    .Kd = 0.0f,
+    .Kp = 0.3f,  // 极度柔和的比例控制：Kp调小，让修正动作如丝般顺滑，消除硬拽感
+    .Ki = 0.0f,  // 坚决剔除积分：绝不让历史误差累积，杜绝一切长周期画龙（低频震荡）
+    .Kd = 0.0f,  // 彻底剔除微分：因为离散差分会极度放大陀螺仪的高频噪声，导致车身剧烈抖动
     .Target = 0,
     .Measure = 0,
     {0, 0, 0},
@@ -94,8 +94,8 @@ pid_t pid_Gyro = {
     .KiOut = 0,
     .KdOut = 0,
     .PID_Out = 0,
-    .PID_Limit_MAX = 3200,
-    .Ki_Limit_MAX = 3200,
+    .PID_Limit_MAX = 20,
+    .Ki_Limit_MAX = 0,
 };
 
 // 角度环参数
@@ -194,14 +194,14 @@ void PWM_Limit(int *a, int ABS_MAX)
 void Set_Motor1_PWM(int Target_PWM)
 {
     PWM_Limit(&Target_PWM, 9999);
-    DL_TimerA_setCaptureCompareValue(PWM_0_INST, Target_PWM, GPIO_PWM_0_C0_IDX);
+    DL_TimerA_setCaptureCompareValue(PWM_0_INST, Target_PWM, GPIO_PWM_0_C1_IDX); // 映射到真实的左轮硬件
 }
 
 // 设置电机2的PWM占空比
 void Set_Motor2_PWM(int Target_PWM)
 {
     PWM_Limit(&Target_PWM, 9999);
-    DL_TimerA_setCaptureCompareValue(PWM_0_INST, Target_PWM, GPIO_PWM_0_C1_IDX);
+    DL_TimerA_setCaptureCompareValue(PWM_0_INST, Target_PWM, GPIO_PWM_0_C0_IDX); // 映射到真实的右轮硬件
 }
 
 // 设置电机1的速度
