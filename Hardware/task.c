@@ -216,7 +216,7 @@ void Task_1(void)
            // 提高 P 和 D 参数以增强循迹响应
             pid_Turn.Kp = 6.0;   // 增大 P 参数，克服前轮摩擦力僵硬现象
             pid_Turn.Ki = 0.0;  
-            pid_Turn.Kd = 400.0; // 增大 D 参数，遇到偏差瞬间产生大阻尼快速纠正车头
+            pid_Turn.Kd = 25.0;  // 原始工作值
             
             // 启动前清空 PID 历史误差累积数据，防止初始误判
             pid_Turn.KpOut = 0;
@@ -345,7 +345,7 @@ void Task_2(void)
             
             pid_Turn.Kp = 6.0;   // 增大 P 参数，克服前轮摩擦力僵硬现象
             pid_Turn.Ki = 0.0;  
-            pid_Turn.Kd = 400.0; // 增大 D 参数，遇到偏差瞬间产生大阻尼快速纠正车头
+            pid_Turn.Kd = 25.0;  // 原始工作值
             
             // 启动前清空 PID 历史误差累积数据，防止初始误判
             pid_Turn.KpOut = 0;

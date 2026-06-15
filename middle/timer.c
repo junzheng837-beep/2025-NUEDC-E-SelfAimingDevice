@@ -254,47 +254,71 @@ static void Timer_10ms_Control_Task(void)
         last_mode = Car_Mode; // 更新模式记录
         Huidu_Proc(Huidu_Datas);
         
-        // 丢线检测防抖计数器
-        static uint8_t lost_line_cnt = 0; 
-        
-        // 循迹模式下的悬空保护逻辑 (加入防抖滤除颠簸)
-        // 在测速模式下，强制屏蔽灰度悬空保护
-        if (Huidu_Datas == 0xFFF && Test_Speed_Mode == 0) 
-        {
-            lost_line_cnt++;
-            // 连续多次检测到全白状态，判定为彻底丢线或悬空
-            if (lost_line_cnt >= 5) 
-            {
-                Soft_Basic_Speed = 0.0f; 
-                target_speed_1 = 0;
-                target_speed_2 = 0;
-                target_turn = 0; // 清空转向
-            }
-            // 若仅为短暂丢线波动，则沿用上一周期的状态参量以执行惯性盲冲过度
-        }
-        else 
-        {
-            lost_line_cnt = 0; // 只要看到线，立马清零防抖计数
+        // 【注：已强行拆除“悬空断电保护”】
+        // 原来的保护逻辑只要探头全白 50ms 就会切断所有动力，导致过弯丢线时“跑跑停停”且丧失转向力！
+        // 拆除后，探头全白时会自然沿用 gw_gray 里的 huidu_lasterror 执行盲冲救车！
 
-            // 软启动平滑过度
-            if (Soft_Basic_Speed < Basic_Speed) Soft_Basic_Speed += 0.5f;
-            else if (Soft_Basic_Speed > Basic_Speed) Soft_Basic_Speed -= 0.5f;
+        // 软启动平滑过度
+        if (Soft_Basic_Speed < Basic_Speed) Soft_Basic_Speed += 0.5f;
+        else if (Soft_Basic_Speed > Basic_Speed) Soft_Basic_Speed -= 0.5f;
+
+            // 由按键控制的定时定量脱机测试 (跑一段自动停 + 自动计分)
+            extern uint8_t Tracking_Test_Flag;
+            static uint16_t auto_stop_timer = 0;
+            static float current_run_score = 0;
+            
+            if (Tracking_Test_Flag == 1) 
+            {
+                if (auto_stop_timer == 0) {
+                    current_run_score = 0.0f; // 起步时清空上一轮的误差积分
+                }
+                
+                Basic_Speed = 20.0f;
+                MOTOR1_ENABLE_FLAG = 1;
+                MOTOR2_ENABLE_FLAG = 1;
+                Turn_PID_Flag = 1;
+                
+                auto_stop_timer++;
+                // 累加探头偏差的绝对值：跑得越稳，分数越低；晃得越厉害，分数越高
+                if (Huidu_Error < 0) current_run_score -= Huidu_Error;
+                else current_run_score += Huidu_Error;
+                
+                // 以 10ms 周期计算，200 次就是 2.0 秒。
+                if (auto_stop_timer >= 200) 
+                {
+                    Tracking_Test_Flag = 0; // 2.0 秒后自动熄火刹车！
+                    
+                    // 刹车瞬间，通过蓝牙把“本次得分”发给电脑的自动化脚本
+                    extern void BLE_send_String(unsigned char *str);
+                    char msg[64];
+                    sprintf(msg, "[AUTO_SCORE]:%d\r\n", (int)current_run_score);
+                    BLE_send_String((unsigned char*)msg);
+                }
+            } 
+            else 
+            {
+                auto_stop_timer = 0; // 熄火状态下，计时器归零等待下次双击
+                Basic_Speed = 0.0f;
+                MOTOR1_ENABLE_FLAG = 0;
+                MOTOR2_ENABLE_FLAG = 0;
+                Turn_PID_Flag = 0;
+                target_turn = 0;
+                pid_Turn.KpOut = 0; pid_Turn.KiOut = 0; pid_Turn.KdOut = 0; pid_Turn.PID_Out = 0;
+            }
 
             if (Turn_PID_Flag == 1) 
             {
                 target_turn = PID_Calculate(&pid_Turn, Huidu_Error, 0); 
                 
                 // 解除封印：保证救车差速能发挥最大作用
-                float max_turn = 120.0f; 
+                float max_turn = 60.0f; // 开放更大限幅：允许一侧轮子短暂反转来强行拖拽重车头
                 if (target_turn > max_turn)  target_turn = max_turn;
                 if (target_turn < -max_turn) target_turn = -max_turn;
             }
 
-            // 修正极性：M1定为左轮，正数为前进。
-            // 当偏左时（黑线在右，Huidu_Error为正，target_turn为负），左轮(M1)必须减速，右轮(M2)必须加速。
-            target_speed_1 = Soft_Basic_Speed - target_turn; 
-            target_speed_2 = Soft_Basic_Speed + target_turn;
-        }
+            // M1 左轮，M2 右轮 (与 spin mode 第247行注释一致)
+            target_speed_1 = Soft_Basic_Speed - target_turn; // 左轮
+            target_speed_2 = Soft_Basic_Speed + target_turn; // 右轮
     }
 
     // 测试模式下的强制速度设定
@@ -302,7 +326,8 @@ static void Timer_10ms_Control_Task(void)
     static float locked_yaw = 0.0f;
     static uint8_t gyro_lock_init = 0;
 
-    if (Test_Speed_Mode == 1) 
+    // 临时屏蔽直线测试覆盖逻辑，让路给循迹测试
+    if (Test_Speed_Mode == 1 && 0) 
     {
         // 恢复软启动，避免起步打滑
         if (Test_Soft_Speed < Target_Speed_Test) Test_Soft_Speed += 0.6f;
@@ -328,10 +353,6 @@ static void Timer_10ms_Control_Task(void)
             if (turn_comp > 15.0f) turn_comp = 15.0f;
             if (turn_comp < -15.0f) turn_comp = -15.0f;
             
-            // 注意：此时我们已经将物理和代码完美对应，M1 就是左轮，M2 就是右轮。
-            // 当车头向右偏时，陀螺仪 Z 轴角度减小，计算出的 turn_comp 为正数。
-            // 此时必须让左轮(M1)减速，右轮(M2)加速，才能让车头向左回正。
-            // 也就是 M1 = 基础 - turn_comp(正数)，M2 = 基础 + turn_comp(正数)
             target_speed_1 = Test_Soft_Speed - turn_comp;
             target_speed_2 = Test_Soft_Speed + turn_comp;
         }

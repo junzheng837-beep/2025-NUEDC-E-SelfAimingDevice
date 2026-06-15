@@ -24,7 +24,7 @@
 /*-------------------------------------------------------------------------------------------*/
 uint8_t Car_Mode = 0; // 假设 0 为 Run_Mode
 float Basic_Speed = 10;
-uint8_t OLED_View_Select = 1;
+uint8_t OLED_View_Select = 2;
 float Target_Distance = 0;
 float Target_Gyro = 0;
 float Target_Angle = 0;
@@ -72,30 +72,8 @@ int main(void)
         // 主循环仅调用任务调度器，具体的任务分发由 task.c 处理
         Task_Scheduler();
         
-        // 蓝牙数据接收处理
+        // 蓝牙数据接收处理 (依然保留蓝牙接收，以防你需要发指令，但移除所有向上位机发送数据的逻辑)
         Receive_Bluetooth_Data();
-        
-        extern volatile uint8_t flag_50ms_telemetry;
-        if (flag_50ms_telemetry)
-        {
-            flag_50ms_telemetry = 0;
-            extern float Motor1_Speed;
-            extern float Motor2_Speed;
-            extern float Debug_Yaw_Diff;
-            extern uint8_t Test_Speed_Mode;
-            extern float Target_Speed_Test;
-            extern volatile uint16_t telemetry_pause_ms;
-            extern volatile uint8_t telemetry_enabled;
-            
-            if (telemetry_pause_ms == 0 && (telemetry_enabled == 1 || Test_Speed_Mode == 1)) {
-                float yaw_to_send = Debug_Yaw_Diff;
-                if (Test_Speed_Mode == 1) {
-                    yaw_to_send = Target_Speed_Test;
-                }
-                
-                Mobile_sendData_UART1(Motor1_Speed, Motor2_Speed, yaw_to_send);
-            }
-        }
     }
 }
 

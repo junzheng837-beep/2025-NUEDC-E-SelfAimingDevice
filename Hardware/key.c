@@ -73,6 +73,8 @@ void Key_Read(void)
 /*-------------------------------------------------------------------------------------------*/
 static uint8_t is_motor_running = 0;
 
+uint8_t Tracking_Test_Flag = 0;
+
 void KEY_PROC(void)
 {
     static uint8_t first_init = 0;
@@ -173,6 +175,7 @@ void KEY_PROC(void)
     /* ----- 双击处理 ----- */
     if(Key[0].Double_Flag==1)
     {
+        Tracking_Test_Flag = !Tracking_Test_Flag;
         Key[0].Double_Flag=0;
     }
     else if(Key[1].Double_Flag==1) // 增加圈数

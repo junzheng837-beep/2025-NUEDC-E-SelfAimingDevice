@@ -1,3 +1,6 @@
+#include "hw_lcd.h"
+char tuner_msg1[32] = "Wait...";
+char tuner_msg2[32] = "Score: N/A";
 #include "bsp_hc05.h"
 #include "usart.h" 
 #include <stdio.h>
@@ -9,8 +12,8 @@ volatile uint8_t ble_rx_idle_cnt = 0;
 
 void BLE_Send_Bit(unsigned char ch)
 {
-    // 修复：不要使�?DL_UART_isBusy，因为它在接收数据时也会返回 true 导致死锁挂起
-    // 使用阻塞发送函数，内部仅检测发�?FIFO 是否已满
+    // 修复：不要使?DL_UART_isBusy，因为它在接收数据时也会返回 true 导致死锁挂起
+    // 使用阻塞发送函数，内部仅检测发?FIFO 是否已满
     DL_UART_Main_transmitDataBlocking(UART_1_INST, ch);
 }
 
@@ -63,30 +66,49 @@ void Receive_Bluetooth_Data(void)
         
         if (ch == '\n' || ch == ']' || local_len >= 127) {
             local_buf[local_len] = '\0';
+            
+            for (int i = 0; i < local_len; i++) {
+                if (local_buf[i] == '\r' || local_buf[i] == '\n') {
+                    local_buf[i] = '\0';
+                    break;
+                }
+            }
 
-        // ================= 自动同步面板与调参对�?=================
+        // ================= 自动同步面板与调参对?=================
         extern uint8_t OLED_View_Select;
         if (OLED_View_Select == 2 || OLED_View_Select == 7) {
-            v_loop = 2; // �?Turn
+            v_loop = 2; // ?Turn
         } else if (OLED_View_Select == 5) {
-            v_loop = 0; // �?M1
+            v_loop = 0; // ?M1
         } else if (OLED_View_Select == 6) {
-            v_loop = 1; // �?M2
+            v_loop = 1; // ?M2
         } else if (OLED_View_Select == 8) {
-            v_loop = 4; // �?Dist
+            v_loop = 4; // ?Dist
         } else if (OLED_View_Select == 10) {
-            v_loop = 3; // �?Angle
+            v_loop = 3; // ?Angle
         } else if (OLED_View_Select == 1) {
-            // 在测试看板页，v_loop 只能�?M1 �?M2，防止越�?           if (v_loop != 0 && v_loop != 1) v_loop = 0;
+            // 在测试看板页，v_loop 只能?M1 ?M2，防止越?           if (v_loop != 0 && v_loop != 1) v_loop = 0;
         }
         extern uint8_t Tuning_Loop;
         Tuning_Loop = v_loop;
         // =======================================================
 
-        // 交互�?PID 调参解析
+        // 交互?PID 调参解析
         float val = 0.0f;
         char msg[64];
-        if (strncmp((char *)local_buf, "TP=", 3) == 0 || strncmp((char *)local_buf, "tp=", 3) == 0) {
+        if (strncmp((char *)local_buf, "T1=", 3) == 0) {
+            extern uint8_t OLED_View_Select;
+            strncpy(tuner_msg1, (char *)&local_buf[3], 31);
+            tuner_msg1[31] = '\0';
+            OLED_View_Select = 99;
+        }
+        else if (strncmp((char *)local_buf, "T2=", 3) == 0) {
+            extern uint8_t OLED_View_Select;
+            strncpy(tuner_msg2, (char *)&local_buf[3], 31);
+            tuner_msg2[31] = '\0';
+            OLED_View_Select = 99;
+        }
+        else if (strncmp((char *)local_buf, "TP=", 3) == 0 || strncmp((char *)local_buf, "tp=", 3) == 0) {
             val = atof((char *)&local_buf[3]);
             pid_Turn.Kp = val;
             sprintf(msg, "Turn Kp set to: %d.%02d\r\n", (int)val, (int)(val*100)%100);
@@ -200,12 +222,12 @@ void Receive_Bluetooth_Data(void)
             if (sscanf((char *)local_buf, "[key,%9[^,],%9[^]]]", name, action) == 2) {
                 if (strcmp(action, "down") == 0) {
                     
-                    if (strcmp(name, "1") == 0) { // 切换调节�?(限制在面板存在的PID�?
+                    if (strcmp(name, "1") == 0) { // 切换调节?(限制在面板存在的PID?
                         extern uint8_t OLED_View_Select;
                         if (OLED_View_Select == 1) {
-                            v_loop = (v_loop == 0) ? 1 : 0; // 测试看板仅展�?M1 �?M2
+                            v_loop = (v_loop == 0) ? 1 : 0; // 测试看板仅展?M1 ?M2
                         } else if (OLED_View_Select == 2) {
-                            v_loop = 2; // �?Turn
+                            v_loop = 2; // ?Turn
                         } else if (OLED_View_Select == 5) {
                             v_loop = 0;
                         } else if (OLED_View_Select == 6) {
@@ -265,7 +287,7 @@ void Receive_Bluetooth_Data(void)
                         }
                     }
                     
-                    // 状态反�?
+                    // 状态反?
                     const char *loop_names[] = {"M1", "M2", "Turn", "Angle", "Dist"};
                     const char *param_names[] = {"Kp", "Ki", "Kd"};
                     pid_t *curr_pid = NULL;
@@ -281,7 +303,7 @@ void Receive_Bluetooth_Data(void)
                     else if (v_param == 2) curr_val = curr_pid->Kd;
                     
                     extern volatile uint16_t telemetry_pause_ms;
-                    telemetry_pause_ms = 3000; // 暂停波形发�?3 秒，以免刷屏
+                    telemetry_pause_ms = 3000; // 暂停波形发?3 秒，以免刷屏
                     
                     sprintf(msg, "Sel: %s %s = %d.%02d\r\n", loop_names[v_loop], param_names[v_param], (int)curr_val, abs((int)(curr_val*100)%100));
                     BLE_send_String((unsigned char *)msg);
@@ -325,7 +347,7 @@ void Receive_Bluetooth_Data(void)
                         Tuning_Mode = 1;
                     }
                     else {
-                        // 如果没有使用特定�?1, 2, 3 ID，则按原逻辑基于当前 v_param 修改
+                        // 如果没有使用特定?1, 2, 3 ID，则按原逻辑基于当前 v_param 修改
                         if (v_param == 0) {
                             target_pid->Kp = slider_val;
                         }
@@ -339,9 +361,9 @@ void Receive_Bluetooth_Data(void)
                 }
                 
                 // 因为滑杆拖动时会产生海量高频数据，如果每次都回复会瞬间挤爆蓝牙发送通道
-                // 所以在这里不回�?Sel 文本，只默默修改参数并重置暂停计时器
+                // 所以在这里不回?Sel 文本，只默默修改参数并重置暂停计时器
                 extern volatile uint16_t telemetry_pause_ms;
-                telemetry_pause_ms = 3000; // 暂停波形发�?3 秒，以免刷屏
+                telemetry_pause_ms = 3000; // 暂停波形发?3 秒，以免刷屏
             }
         }
         else {

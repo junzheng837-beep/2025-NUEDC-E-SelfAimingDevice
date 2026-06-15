@@ -21,8 +21,8 @@ extern uint8_t K230_Ctrl_Mode;
 
 // 速度环参数
 pid_t pid_Motor1_Speed = {
-    .Kp = 1.500f,  // 左右轮参数统一，消除它们数学响应上的“性格差异”
-    .Ki = 1.400f,
+    .Kp = 25.000f,  // 彻底硬化底层速度环：之前的1.5太软，导致执行外环转向命令时有半秒延迟！
+    .Ki = 3.000f,   // 加强积分，让稳态更快到达
     .Kd = 0.040f,
     .Target = 0,
     .Measure = 0,
@@ -36,8 +36,8 @@ pid_t pid_Motor1_Speed = {
 };
 
 pid_t pid_Motor2_Speed = {
-    .Kp = 1.500f,  // 左右轮参数统一，消除它们数学响应上的“性格差异”
-    .Ki = 1.400f,
+    .Kp = 25.000f,  // 左右轮参数统一，消除它们数学响应上的“性格差异”
+    .Ki = 3.000f,
     .Kd = 0.040f,
     .Target = 0,
     .Measure = 0,
@@ -50,11 +50,11 @@ pid_t pid_Motor2_Speed = {
     .Ki_Limit_MAX = 3000,
 };
 
-// 转向环参数
+// 转向环参数 (大负载、长前探专用起步参数)
 pid_t pid_Turn = {
-    .Kp = 1.7f,
-    .Ki = 0.0f,
-    .Kd = 120.0f,
+    .Kp = 6.0f,  // 原始工作值
+    .Ki = 0.0f,  
+    .Kd = 25.0f, // 原始工作值
     .Target = 0,
     .Measure = 0,
     {0, 0, 0},

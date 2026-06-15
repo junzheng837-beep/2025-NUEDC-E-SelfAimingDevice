@@ -47,8 +47,9 @@ float Huidu_Proc(uint16_t huidu_data)
     Huidu_Sum = 0;
     for(int i=0; i<12; i++)
     {
+        // 硬件电平：白=1，黑=0。因此我们检测0来判断是否压中黑线
         // bit11 对应 i=0(权重-5.5)，bit0 对应 i=11(权重5.5)
-        if((huidu_data >> (11 - i)) & 0x01) 
+        if(((huidu_data >> (11 - i)) & 0x01) == 0) 
         {
             Huidu_Sum++;
             total_weight += Huidu_Weights[i];

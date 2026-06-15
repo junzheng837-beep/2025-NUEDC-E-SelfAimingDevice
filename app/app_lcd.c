@@ -297,6 +297,11 @@ void LCD_Show_Proc(void)
             case 8: Draw_App_UI_PID_Background("DISTANCE PID"); break;
             case 9: Draw_App_UI_PID_Background("GYRO PID"); break;
             case 10: Draw_App_UI_PID_Background("ANGLE PID"); break;
+            case 99: {
+                LCD_Fill(0, 0, 320, 240, BLACK);
+                LCD_ShowString(10, 10, (const unsigned char*)"AUTO TUNING", GREEN, BLACK, 24, 0);
+                break;
+            }
             default: break;
         }
         last_view = OLED_View_Select;
@@ -357,14 +362,20 @@ void LCD_Show_Proc(void)
             TFT_ShowFloat(72, 45,  pid_Turn.Kp, (Tuning_Mode && Tuning_Cursor == 0) ? YELLOW : WHITE, GRAYBLUE, 16);
             TFT_ShowFloat(72, 75,  pid_Turn.Ki, (Tuning_Mode && Tuning_Cursor == 1) ? YELLOW : WHITE, GRAYBLUE, 16);
             TFT_ShowFloat(72, 105, pid_Turn.Kd, (Tuning_Mode && Tuning_Cursor == 2) ? YELLOW : WHITE, GRAYBLUE, 16);
-            TFT_ShowFloat(72, 135, Basic_Speed, WHITE, GRAYBLUE, 16);
+            // Debug: replace Basic_Speed with PID chain diagnostics
+            extern float Huidu_Error;
+            char dbg2[16];
+            sprintf(dbg2, "E:%+.1f", Huidu_Error);
+            LCD_ShowString(5, 135, (const unsigned char*)dbg2, GREEN, GRAYBLUE, 16, 0);
+            sprintf(dbg2, "O:%+.1f", pid_Turn.PID_Out);
+            LCD_ShowString(80, 135, (const unsigned char*)dbg2, CYAN, GRAYBLUE, 16, 0);
 
             // 右侧：传感器输入与电机输出
             TFT_ShowFloat(225, 45,  Debug_Yaw_Diff, yaw_color, GRAYBLUE, 16);        
             TFT_ShowBinNum12(210, 75, Huidu_Datas, CYAN, GRAYBLUE, 16);
             TFT_ShowFloat(225, 105, Motor1_Speed, WHITE, GRAYBLUE, 16);
             TFT_ShowFloat(225, 135, Motor2_Speed, WHITE, GRAYBLUE, 16);
-            
+
             //  新增：绘制进度条
             Draw_Speed_Bar(225, 124, Motor1_Speed);
             Draw_Speed_Bar(225, 154, Motor2_Speed);
@@ -520,6 +531,23 @@ void LCD_Show_Proc(void)
         case 8: Update_App_UI_PID_Values(pid_Distance.Kp, pid_Distance.Ki, pid_Distance.Kd); break;
         case 9: Update_App_UI_PID_Values(pid_Gyro.Kp, pid_Gyro.Ki, pid_Gyro.Kd); break;
         case 10: Update_App_UI_PID_Values(pid_Angle.Kp, pid_Angle.Ki, pid_Angle.Kd); break;
+        case 99: {
+            extern char tuner_msg1[32];
+            extern char tuner_msg2[32];
+            extern float Huidu_Error;
+            extern uint16_t Huidu_Datas;
+            LCD_ShowString(10, 50, (const unsigned char*)tuner_msg1, YELLOW, BLACK, 24, 0);
+            LCD_ShowString(10, 90, (const unsigned char*)tuner_msg2, WHITE, BLACK, 24, 0);
+            // Debug: real-time sensor and PID output
+            char dbg[32];
+            sprintf(dbg, "Err:%+.1f  ", Huidu_Error);
+            LCD_ShowString(10, 130, (const unsigned char*)dbg, GREEN, BLACK, 16, 0);
+            sprintf(dbg, "PID:%+.1f  ", pid_Turn.PID_Out);
+            LCD_ShowString(10, 150, (const unsigned char*)dbg, CYAN, BLACK, 16, 0);
+            sprintf(dbg, "Hd:%04X Flg:%d", Huidu_Datas, Turn_PID_Flag);
+            LCD_ShowString(10, 170, (const unsigned char*)dbg, WHITE, BLACK, 16, 0);
+            break;
+        }
         default: break;
     }
 }
