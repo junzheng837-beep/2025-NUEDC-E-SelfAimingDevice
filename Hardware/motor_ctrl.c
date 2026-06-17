@@ -21,8 +21,8 @@ extern uint8_t K230_Ctrl_Mode;
 
 // 速度环参数
 pid_t pid_Motor1_Speed = {
-    .Kp = 25.000f,  // 彻底硬化底层速度环：之前的1.5太软，导致执行外环转向命令时有半秒延迟！
-    .Ki = 3.000f,   // 加强积分，让稳态更快到达
+    .Kp = 80.000f,  // 【终极硬化底盘】：解决 PWM 响应太软的问题！
+    .Ki = 3.000f,   
     .Kd = 0.040f,
     .Target = 0,
     .Measure = 0,
@@ -32,11 +32,11 @@ pid_t pid_Motor1_Speed = {
     .KdOut = 0,
     .PID_Out = 0,
     .PID_Limit_MAX = 9999,
-    .Ki_Limit_MAX = 3000,
+    .Ki_Limit_MAX = 9000,
 };
 
 pid_t pid_Motor2_Speed = {
-    .Kp = 25.000f,  // 左右轮参数统一，消除它们数学响应上的“性格差异”
+    .Kp = 80.000f,  // 左右轮保持绝对一致
     .Ki = 3.000f,
     .Kd = 0.040f,
     .Target = 0,
@@ -47,14 +47,14 @@ pid_t pid_Motor2_Speed = {
     .KdOut = 0,
     .PID_Out = 0,
     .PID_Limit_MAX = 9999,
-    .Ki_Limit_MAX = 3000,
+    .Ki_Limit_MAX = 9000,
 };
 
 // 转向环参数 (大负载、长前探专用起步参数)
 pid_t pid_Turn = {
-    .Kp = 6.0f,  // 原始工作值
-    .Ki = 0.0f,  
-    .Kd = 25.0f, // 原始工作值
+    .Kp = 5.0f,  // 45.0 极速档：引入积分后，无需过高的P，回归平稳
+    .Ki = 0.02f, // 基于人类肉眼观察：0.02既能消除静差，又完全无画龙(最优解)
+    .Kd = 145.0f, // 积分项去除了静差扭动，阻尼也可以随之降低，恢复弯道灵活性
     .Target = 0,
     .Measure = 0,
     {0, 0, 0},

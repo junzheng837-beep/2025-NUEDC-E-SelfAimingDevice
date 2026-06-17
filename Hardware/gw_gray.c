@@ -84,19 +84,29 @@ float Huidu_Proc(uint16_t huidu_data)
         White_Blind_Count++; // 累计全白周期
         
         // 抗局部干扰逻辑 (盲区补偿)
-        if (White_Blind_Count <= 8) 
+        // 灰度灯之间有物理间隔，线经常卡在两个灯中间导致全白(Huidu_Sum=0)
+        // 放大容忍度到 30 个周期 (300ms)
+        if (White_Blind_Count <= 30) 
         {
-            // 维持异常前最后一刻的有效偏差状态，执行惯性补偿
-            Huidu_Error = huidu_lasterror; 
+            // 【致命 Bug 修复】：如果小车处于急转弯边缘（上一次误差绝对值 > 4.0），此时全白绝不是因为卡在灯缝里！而是完全飞出了探头！
+            // 原先的代码会直接“冻结”误差，导致 (当前误差 - 上次误差) = 0，使得 Kd (阻尼差速) 瞬间归零！小车会在弯道失去转向力！
+            // 解决办法：如果是从边缘飞出的，不但不冻结，还要瞬间拉爆误差，强行激发出极大的 D 项差速把车头拽回来！
+            if (huidu_lasterror > 4.0f) {
+                Huidu_Error = 8.0f; // 瞬间拉高，激发巨大 Kd
+            } else if (huidu_lasterror < -4.0f) {
+                Huidu_Error = -8.0f;
+            } else {
+                // 只有误差很小时全白，才说明是卡在中间缝隙了，此时平滑过渡
+                Huidu_Error = huidu_lasterror; 
+            }
         }
         else 
         {
-            // 当连续丢线时间过长，判定为物理脱轨
-            // 触发极限偏差纠正机制：
+            // 只有当连续超过 300ms 还没碰到任何黑线，才真正判定为物理脱轨
             if (huidu_lasterror > 0)
-                Huidu_Error = 6.0f;  // 施加最大补偿力矩强制纠偏
+                Huidu_Error = 8.0f;  // 施加最大补偿力矩强制纠偏
             else if (huidu_lasterror < 0)
-                Huidu_Error = -6.0f; 
+                Huidu_Error = -8.0f; 
             else
                 Huidu_Error = 0;   
         }

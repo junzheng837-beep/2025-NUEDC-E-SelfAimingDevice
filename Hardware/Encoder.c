@@ -118,10 +118,14 @@ void GROUP1_IRQHandler(void){
 uint32_t motor1_prev_pulse_micros = 0;
 uint32_t motor2_prev_pulse_micros = 0;
 
+long long Motor1_Total_Pulse = 0;
+long long Motor2_Total_Pulse = 0;
+
 // 计算左轮当前速度 (M/T法)
 void Motor1_Get_Speed(void){
     short Encoder_TIM = Motor1_Encoder_Value;
     Motor1_Encoder_Value = 0;
+    Motor1_Total_Pulse += Encoder_TIM;
     
     if (Encoder_TIM == 0) {
         Motor1_Speed = 0.0f;
@@ -150,7 +154,8 @@ void Motor1_Get_Speed(void){
 void Motor2_Get_Speed(void){
     short Encoder_TIM = Motor2_Encoder_Value;
     Motor2_Encoder_Value = 0;
-    
+    Motor2_Total_Pulse += Encoder_TIM;
+
     if (Encoder_TIM == 0) {
         Motor2_Speed = 0.0f;
         motor2_prev_pulse_micros = get_micros();

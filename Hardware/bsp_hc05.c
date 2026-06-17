@@ -125,6 +125,9 @@ void Receive_Bluetooth_Data(void)
             pid_Turn.Kd = val;
             sprintf(msg, "Turn Kd set to: %d.%02d\r\n", (int)val, (int)(val*100)%100);
             BLE_send_String((unsigned char *)msg);
+            
+            extern uint8_t Tuning_State;
+            Tuning_State = 2; // AI HAS SENT NEW PARAMS! READY!
         }
         // Distance PID (DP, DI, DD)
         else if (strncmp((char *)local_buf, "DP=", 3) == 0 || strncmp((char *)local_buf, "dp=", 3) == 0) {
@@ -202,7 +205,7 @@ void Receive_Bluetooth_Data(void)
             sprintf(msg, "M2 Kd set to: %d.%02d\r\n", (int)val, (int)(val*100)%100);
             BLE_send_String((unsigned char *)msg);
         }
-        // Target Speed (SP)
+        // Target Speed (SP) - 专门用于悬空极速测试
         else if (strncmp((char *)local_buf, "SP=", 3) == 0 || strncmp((char *)local_buf, "sp=", 3) == 0) {
             extern float Target_Speed_Test;
             extern uint8_t Test_Speed_Mode; extern uint8_t MOTOR1_ENABLE_FLAG; extern uint8_t MOTOR2_ENABLE_FLAG;
@@ -213,6 +216,13 @@ void Receive_Bluetooth_Data(void)
                 Test_Speed_Mode = 0; MOTOR1_ENABLE_FLAG = 0; MOTOR2_ENABLE_FLAG = 0;
             }
             sprintf(msg, "Target Speed set to: %d\r\n", (int)Target_Speed_Test);
+            BLE_send_String((unsigned char *)msg);
+        }
+        // Base Speed (BS) - 用于正常循迹调速，不触发测试模式，不自动发车
+        else if (strncmp((char *)local_buf, "BS=", 3) == 0 || strncmp((char *)local_buf, "bs=", 3) == 0) {
+            extern float Target_Speed_Test;
+            Target_Speed_Test = atof((char *)&local_buf[3]);
+            sprintf(msg, "Base Speed set to: %d\r\n", (int)Target_Speed_Test);
             BLE_send_String((unsigned char *)msg);
         }
         // 虚拟按键调参逻辑

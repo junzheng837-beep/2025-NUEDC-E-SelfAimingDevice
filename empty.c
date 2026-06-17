@@ -66,6 +66,18 @@ int main(void)
             flag_100ms_sr04 = 0;
             Global_Ultrasonic_Distance = SR04_GetLength();
         }
+        
+        if (flag_1s_printf)
+        {
+            flag_1s_printf = 0;
+            extern float Motor1_Speed;
+            extern float Motor2_Speed;
+            extern long long Motor1_Total_Pulse;
+            extern long long Motor2_Total_Pulse;
+            char msg[128];
+            sprintf(msg, "SPD M1:%.1f M2:%.1f | PULSE M1:%lld M2:%lld\r\n", Motor1_Speed, Motor2_Speed, Motor1_Total_Pulse, Motor2_Total_Pulse);
+            BLE_send_String((unsigned char*)msg);
+        }
 
         KEY_PROC();
         LCD_Show_Proc();

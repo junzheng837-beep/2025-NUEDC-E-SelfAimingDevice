@@ -269,24 +269,40 @@ static void Timer_10ms_Control_Task(void)
             
             if (Tracking_Test_Flag == 1) 
             {
+                static float last_score_error = 0;
                 if (auto_stop_timer == 0) {
                     current_run_score = 0.0f; // 起步时清空上一轮的误差积分
+                    last_score_error = Huidu_Error;
                 }
                 
-                Basic_Speed = 20.0f;
+                extern float Target_Speed_Test;
+                Basic_Speed = Target_Speed_Test;
                 MOTOR1_ENABLE_FLAG = 1;
                 MOTOR2_ENABLE_FLAG = 1;
                 Turn_PID_Flag = 1;
                 
                 auto_stop_timer++;
-                // 累加探头偏差的绝对值：跑得越稳，分数越低；晃得越厉害，分数越高
-                if (Huidu_Error < 0) current_run_score -= Huidu_Error;
-                else current_run_score += Huidu_Error;
                 
-                // 以 10ms 周期计算，200 次就是 2.0 秒。
-                if (auto_stop_timer >= 200) 
+                // 【核心算法升级：引入“抖动惩罚”】
+                // 1. 基础误差（绝对值）
+                float abs_err = (Huidu_Error < 0) ? -Huidu_Error : Huidu_Error;
+                
+                // 2. 计算误差的变化率（即车头晃动的剧烈程度）
+                float delta_err = Huidu_Error - last_score_error;
+                float abs_delta = (delta_err < 0) ? -delta_err : delta_err;
+                
+                // 3. 综合得分 = 基础误差 + 抖动惩罚（权重设为5倍，严打锯齿状过弯！）
+                // 这样一来，平滑走大圈的 3.5 得分会很低，而“分次大拐头”的 4.0 会被罚出高分。
+                current_run_score += (abs_err + abs_delta * 5.0f);
+                
+                last_score_error = Huidu_Error;
+                
+                // 以 10ms 周期计算，300 次就是 3.0 秒。
+                if (auto_stop_timer >= 300) 
                 {
-                    Tracking_Test_Flag = 0; // 2.0 秒后自动熄火刹车！
+                    extern uint8_t Tuning_State;
+                    Tracking_Test_Flag = 0; // 3.0 秒后自动熄火刹车！
+                    Tuning_State = 0; // 变成 WAIT 状态
                     
                     // 刹车瞬间，通过蓝牙把“本次得分”发给电脑的自动化脚本
                     extern void BLE_send_String(unsigned char *str);
@@ -299,8 +315,10 @@ static void Timer_10ms_Control_Task(void)
             {
                 auto_stop_timer = 0; // 熄火状态下，计时器归零等待下次双击
                 Basic_Speed = 0.0f;
-                MOTOR1_ENABLE_FLAG = 0;
-                MOTOR2_ENABLE_FLAG = 0;
+                if (Test_Speed_Mode == 0) {
+                    MOTOR1_ENABLE_FLAG = 0;
+                    MOTOR2_ENABLE_FLAG = 0;
+                }
                 Turn_PID_Flag = 0;
                 target_turn = 0;
                 pid_Turn.KpOut = 0; pid_Turn.KiOut = 0; pid_Turn.KdOut = 0; pid_Turn.PID_Out = 0;
@@ -309,9 +327,8 @@ static void Timer_10ms_Control_Task(void)
             if (Turn_PID_Flag == 1) 
             {
                 target_turn = PID_Calculate(&pid_Turn, Huidu_Error, 0); 
-                
-                // 解除封印：保证救车差速能发挥最大作用
-                float max_turn = 60.0f; // 开放更大限幅：允许一侧轮子短暂反转来强行拖拽重车头
+                // 彻底解除封印：允许电机发挥出100%的最大物理性能来救车！
+                float max_turn = 150.0f; // 大于电机的绝对物理极限(132)，确保软件不再成为转向瓶颈
                 if (target_turn > max_turn)  target_turn = max_turn;
                 if (target_turn < -max_turn) target_turn = -max_turn;
             }
@@ -326,8 +343,8 @@ static void Timer_10ms_Control_Task(void)
     static float locked_yaw = 0.0f;
     static uint8_t gyro_lock_init = 0;
 
-    // 临时屏蔽直线测试覆盖逻辑，让路给循迹测试
-    if (Test_Speed_Mode == 1 && 0) 
+    // 恢复悬空测速支持
+    if (Test_Speed_Mode == 1) 
     {
         // 恢复软启动，避免起步打滑
         if (Test_Soft_Speed < Target_Speed_Test) Test_Soft_Speed += 0.6f;

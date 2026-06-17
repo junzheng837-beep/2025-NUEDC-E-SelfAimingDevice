@@ -164,7 +164,7 @@ static void Draw_Dashboard_Page2_Background(void) {
 
     // 右侧信息区域绘制
     LCD_ArcRect(165, 40, 310, 160, GRAYBLUE);
-    LCD_ShowChinese(167, 45,  (uint8_t *)"偏航角:", YELLOW, GRAYBLUE, 16, 1); 
+    LCD_ShowChinese(167, 45,  (uint8_t *)"当前速:", YELLOW, GRAYBLUE, 16, 1); 
     LCD_ShowChinese(167, 75,  (uint8_t *)"灰度:", CYAN,  GRAYBLUE, 16, 1); 
     LCD_ShowChinese(167, 105, (uint8_t *)"左轮速:", WHITE, GRAYBLUE, 16, 1); 
     LCD_ShowChinese(167, 135, (uint8_t *)"右轮速:", WHITE, GRAYBLUE, 16, 1); 
@@ -335,6 +335,15 @@ void LCD_Show_Proc(void)
         }
             
         case 2: {
+            extern uint8_t Tuning_State;
+            static uint8_t last_tuning_state = 255;
+            if (Tuning_State != last_tuning_state) {
+                last_tuning_state = Tuning_State;
+                if (Tuning_State == 0) LCD_ShowString(5, 10, (uint8_t *)" WAIT  ", YELLOW, BLACK, 16, 0);
+                else if (Tuning_State == 1) LCD_ShowString(5, 10, (uint8_t *)" RUN   ", RED, BLACK, 16, 0);
+                else if (Tuning_State == 2) LCD_ShowString(5, 10, (uint8_t *)" READY ", GREEN, BLACK, 16, 0);
+            }
+
             uint16_t yaw_color = GREEN;
             if(Debug_Yaw_Diff > 20 || Debug_Yaw_Diff < -20) yaw_color = RED;
             else if(Debug_Yaw_Diff > 10 || Debug_Yaw_Diff < -10) yaw_color = YELLOW;
@@ -349,13 +358,20 @@ void LCD_Show_Proc(void)
                     LCD_DrawRectangle(71, 43, 158, 63, (Tuning_Cursor == 0) ? YELLOW : GRAYBLUE);
                     LCD_DrawRectangle(71, 73, 158, 93, (Tuning_Cursor == 1) ? YELLOW : GRAYBLUE);
                     LCD_DrawRectangle(71, 103, 158, 123, (Tuning_Cursor == 2) ? YELLOW : GRAYBLUE);
-                    LCD_ShowString(5, 10, (uint8_t *)" TUNING ", BLACK, YELLOW, 16, 0); // 移到左上角
+                    // 隐藏原有的手动 TUNING 提示
                 } else {
                     LCD_DrawRectangle(71, 43, 158, 63, GRAYBLUE);
                     LCD_DrawRectangle(71, 73, 158, 93, GRAYBLUE);
                     LCD_DrawRectangle(71, 103, 158, 123, GRAYBLUE);
-                    LCD_ShowString(5, 10, (uint8_t *)"        ", BLACK, BLACK, 16, 0);  // 清除左上角提示
                 }
+                last_tuning_state = 255; // 强制刷新状态栏
+            }
+
+            if (Tuning_State != last_tuning_state && Tuning_Mode == 0) {
+                last_tuning_state = Tuning_State;
+                if (Tuning_State == 0) LCD_ShowString(5, 10, (uint8_t *)" WAIT  ", YELLOW, BLACK, 16, 0);
+                else if (Tuning_State == 1) LCD_ShowString(5, 10, (uint8_t *)" RUN   ", RED, BLACK, 16, 0);
+                else if (Tuning_State == 2) LCD_ShowString(5, 10, (uint8_t *)" READY ", GREEN, BLACK, 16, 0);
             }
 
             // 数据全部对齐到 X = 72
@@ -371,7 +387,8 @@ void LCD_Show_Proc(void)
             LCD_ShowString(80, 135, (const unsigned char*)dbg2, CYAN, GRAYBLUE, 16, 0);
 
             // 右侧：传感器输入与电机输出
-            TFT_ShowFloat(225, 45,  Debug_Yaw_Diff, yaw_color, GRAYBLUE, 16);        
+            extern float Target_Speed_Test;
+            TFT_ShowFloat(225, 45,  Target_Speed_Test, WHITE, GRAYBLUE, 16);        
             TFT_ShowBinNum12(210, 75, Huidu_Datas, CYAN, GRAYBLUE, 16);
             TFT_ShowFloat(225, 105, Motor1_Speed, WHITE, GRAYBLUE, 16);
             TFT_ShowFloat(225, 135, Motor2_Speed, WHITE, GRAYBLUE, 16);
