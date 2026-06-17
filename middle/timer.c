@@ -297,11 +297,11 @@ static void Timer_10ms_Control_Task(void)
                 
                 last_score_error = Huidu_Error;
                 
-                // 以 10ms 周期计算，300 次就是 3.0 秒。
-                if (auto_stop_timer >= 300) 
+                // 以 10ms 周期计算，200 次就是 2.0 秒。
+                if (auto_stop_timer >= 200) 
                 {
                     extern uint8_t Tuning_State;
-                    Tracking_Test_Flag = 0; // 3.0 秒后自动熄火刹车！
+                    Tracking_Test_Flag = 0; // 2.0 秒后自动熄火刹车！
                     Tuning_State = 0; // 变成 WAIT 状态
                     
                     // 刹车瞬间，通过蓝牙把“本次得分”发给电脑的自动化脚本
@@ -327,10 +327,7 @@ static void Timer_10ms_Control_Task(void)
             if (Turn_PID_Flag == 1) 
             {
                 target_turn = PID_Calculate(&pid_Turn, Huidu_Error, 0); 
-                // 彻底解除封印：允许电机发挥出100%的最大物理性能来救车！
-                float max_turn = 150.0f; // 大于电机的绝对物理极限(132)，确保软件不再成为转向瓶颈
-                if (target_turn > max_turn)  target_turn = max_turn;
-                if (target_turn < -max_turn) target_turn = -max_turn;
+                // 响应调试需求：彻底移除 max_turn 限制，让转向环差速值 100% 毫无保留地下发给速度环
             }
 
             // M1 左轮，M2 右轮 (与 spin mode 第247行注释一致)

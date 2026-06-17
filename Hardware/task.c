@@ -19,7 +19,7 @@ uint8_t Task_Mode = 0; // 0:待机, 1:跑任务一, 2:跑任务二
 uint8_t Task1_Time_flag = 0;
 uint8_t Task2_Time_flag = 0;
 uint8_t Test_Speed_Mode = 0;
-float Target_Speed_Test = 45.0f;
+float Target_Speed_Test = 35.0f;
 // 新增引入编码器计算的里程变量
 extern float Measure_Distance;
 extern float Motor1_Lucheng;
