@@ -297,11 +297,11 @@ static void Timer_10ms_Control_Task(void)
                 
                 last_score_error = Huidu_Error;
                 
-                // 以 10ms 周期计算，200 次就是 2.0 秒。
-                if (auto_stop_timer >= 200) 
+                // 以 10ms 周期计算，400 次就是 4.0 秒。
+                if (auto_stop_timer >= 400) 
                 {
                     extern uint8_t Tuning_State;
-                    Tracking_Test_Flag = 0; // 2.0 秒后自动熄火刹车！
+                    Tracking_Test_Flag = 0; // 4.0 秒后自动熄火刹车！
                     Tuning_State = 0; // 变成 WAIT 状态
                     
                     // 刹车瞬间，通过蓝牙把“本次得分”发给电脑的自动化脚本
