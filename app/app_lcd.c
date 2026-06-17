@@ -12,8 +12,8 @@ extern float Basic_Speed;                                   // 目标基础速�
 extern uint8_t OLED_View_Select;                            // OLED选择界面变量
 
 // 速度相关 (这里沿用你代码中的变量名)
-extern float Motor1_Speed;                                  // 左轮速度 
-extern float Motor2_Speed;                                  // 右轮速度
+extern volatile float Motor1_Speed;                                  // 左轮速度 
+extern volatile float Motor2_Speed;                                  // 右轮速度
 
 // 新增：任务状态与传感器变量
 extern uint16_t Huidu_Datas;                                 // 灰度原始数据 (12位)
@@ -28,7 +28,7 @@ uint8_t Tuning_Loop = 0;    // 0: M1, 1: M2, ...
 extern float Task1_Time_Sec;
 extern float Task2_Time_Sec;
 // 引入在 Encoder.c 中计算的总路程
-extern float Measure_Distance;
+extern volatile float Measure_Distance;
 // ======================================================================
 // 1. 底层字符串绘制函数库
 // ======================================================================

@@ -19,9 +19,9 @@
 #define Read_Encoder_C 	(DL_GPIO_readPins(Encoder_PORT,Encoder_C_PIN)==Encoder_C_PIN)?0:1//右轮 A相
 #define Read_Encoder_D 	(DL_GPIO_readPins(Encoder_PORT,Encoder_D_PIN)==Encoder_D_PIN)?0:1//右轮 B相
 
-extern float Motor1_Speed;
-extern float Motor2_Speed;
-extern float Measure_Distance;
+extern volatile float Motor1_Speed;
+extern volatile float Motor2_Speed;
+extern volatile float Measure_Distance;
 
 void Motor1_Get_Speed(void);
 void Motor2_Get_Speed(void);

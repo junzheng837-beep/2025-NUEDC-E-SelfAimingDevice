@@ -7,11 +7,11 @@ volatile uint32_t motor2_latest_pulse_micros = 0;
 int32_t Motor1_Encoder_Value = 0;
 int32_t Motor2_Encoder_Value = 0;
 
-float Motor1_Speed = 0;
-float Motor2_Speed = 0;
-float Motor1_Lucheng = 0;
-float Motor2_Lucheng = 0;
-float Measure_Distance = 0;
+volatile float Motor1_Speed = 0;
+volatile float Motor2_Speed = 0;
+volatile float Motor1_Lucheng = 0;
+volatile float Motor2_Lucheng = 0;
+volatile float Measure_Distance = 0;
 
 // 外部中断读取编码器脉冲值
 void GROUP1_IRQHandler(void){
@@ -118,8 +118,8 @@ void GROUP1_IRQHandler(void){
 uint32_t motor1_prev_pulse_micros = 0;
 uint32_t motor2_prev_pulse_micros = 0;
 
-long long Motor1_Total_Pulse = 0;
-long long Motor2_Total_Pulse = 0;
+volatile long long Motor1_Total_Pulse = 0;
+volatile long long Motor2_Total_Pulse = 0;
 
 // 计算左轮当前速度 (M/T法)
 void Motor1_Get_Speed(void){
@@ -188,7 +188,7 @@ void MEASURE_MOTORS_SPEED(void){
 	Motor1_Lucheng += Motor1_Speed*SAMPLE_TIME; // 路程累计
 	Motor2_Lucheng += Motor2_Speed*SAMPLE_TIME; // 路程累计
 	
-    // 获取未经任何系数修饰的底层绝对平均里程
+    // 获取带有底层缩放误差的软件计算里程（需要进行二次映射补偿）
     float raw_distance = Motor1_Lucheng/2.0f + Motor2_Lucheng/2.0f;
     
 	// 分段线性补偿 (解决起步打滑导致的非线性问题)

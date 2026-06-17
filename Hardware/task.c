@@ -21,9 +21,9 @@ uint8_t Task2_Time_flag = 0;
 uint8_t Test_Speed_Mode = 0;
 float Target_Speed_Test = 45.0f;
 // 新增引入编码器计算的里程变量
-extern float Measure_Distance;
-extern float Motor1_Lucheng;
-extern float Motor2_Lucheng;
+extern volatile float Measure_Distance;
+extern volatile float Motor1_Lucheng;
+extern volatile float Motor2_Lucheng;
 // =================================================================
 // task.c 大总管调度器函数
 // =================================================================
@@ -168,15 +168,15 @@ void Task_1(void)
                 }
             }
             // ================ 新增：终点前预判减速逻辑 ================
-            // 终点阈值 710 度，提前约 60 度开始强制减速逻辑
+            // 终点阈值 710 度，提前 30 度开始强制减速逻辑
             if (diff >= 680.0f && diff < 710.0f) 
             {
                 Basic_Speed = 10; // 降低基础速度以确保平稳越线
                 
-                // 关键逻辑：低速下需降低 PID 参数以防止车体剧烈震荡
-                // 平滑减小 PID P与D 参数，保证滑行稳定
+                // 关键逻辑：低速下调整 PID 参数以防止车体剧烈震荡
+                // 平滑减小 Kp 参数并增大 Kd 阻尼参数，保证滑行稳定
                 pid_Turn.Kp = 2.5f;   // 恢复为平稳控制的 Kp 值
-                pid_Turn.Kd = 100.0f; // 恢复为平稳控制的 Kd 值
+                pid_Turn.Kd = 100.0f; // 增大 Kd 恢复平稳控制的阻尼值
             }
             // ==========================================================
         }
@@ -213,10 +213,10 @@ void Task_1(void)
             MOTOR1_ENABLE_FLAG = 1; 
             MOTOR2_ENABLE_FLAG = 1; 
             
-           // 提高 P 和 D 参数以增强循迹响应
+           // 调整 P 和 D 参数以增强循迹响应
             pid_Turn.Kp = 6.0;   // 增大 P 参数，克服前轮摩擦力僵硬现象
             pid_Turn.Ki = 0.0;  
-            pid_Turn.Kd = 25.0;  // 原始工作值
+            pid_Turn.Kd = 25.0;  // 减小阻尼，允许更快的车头动作
             
             // 启动前清空 PID 历史误差累积数据，防止初始误判
             pid_Turn.KpOut = 0;
@@ -304,15 +304,15 @@ void Task_2(void)
                 }
             }
             // ================ 新增：终点前预判减速逻辑 ================
-            // 终点阈值 710 度，提前约 60 度开始强制减速逻辑
+            // 终点阈值 355 度，提前 30 度开始强制减速逻辑
             if (diff >= 325.0f && diff < 355.0f) 
             {
                 Basic_Speed = 10; // 降低基础速度以确保平稳越线
                 
-                // 关键逻辑：低速下需降低 PID 参数以防止车体剧烈震荡
-                // 平滑减小 PID P与D 参数，保证滑行稳定
+                // 关键逻辑：低速下调整 PID 参数以防止车体剧烈震荡
+                // 平滑减小 Kp 参数并增大 Kd 阻尼参数，保证滑行稳定
                 pid_Turn.Kp = 2.5f;   // 恢复为平稳控制的 Kp 值
-                pid_Turn.Kd = 100.0f; // 恢复为平稳控制的 Kd 值
+                pid_Turn.Kd = 100.0f; // 增大 Kd 恢复平稳控制的阻尼值
             }
             // ==========================================================
         }
@@ -345,7 +345,7 @@ void Task_2(void)
             
             pid_Turn.Kp = 6.0;   // 增大 P 参数，克服前轮摩擦力僵硬现象
             pid_Turn.Ki = 0.0;  
-            pid_Turn.Kd = 25.0;  // 原始工作值
+            pid_Turn.Kd = 25.0;  // 减小阻尼，允许更快的车头动作
             
             // 启动前清空 PID 历史误差累积数据，防止初始误判
             pid_Turn.KpOut = 0;

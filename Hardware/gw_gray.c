@@ -1,6 +1,6 @@
 #include "gw_gray.h"
 
-// 定义灰度探头读取端口映射 (IO1~IO12 从左至右排列)
+// 定义灰度探头读取端口映射 (物理布局：IO12 在最左侧，IO1 在最右侧)
 #define Read_Huidu_IO1   ((DL_GPIO_readPins(Huidu_IN1_PORT, Huidu_IN1_PIN)==Huidu_IN1_PIN)?0:1)
 #define Read_Huidu_IO2   ((DL_GPIO_readPins(Huidu_IN2_PORT, Huidu_IN2_PIN)==Huidu_IN2_PIN)?0:1)
 #define Read_Huidu_IO3   ((DL_GPIO_readPins(Huidu_IN3_PORT, Huidu_IN3_PIN)==Huidu_IN3_PIN)?0:1)
@@ -47,7 +47,8 @@ float Huidu_Proc(uint16_t huidu_data)
     Huidu_Sum = 0;
     for(int i=0; i<12; i++)
     {
-        // 硬件电平：白=1，黑=0。因此我们检测0来判断是否压中黑线
+        // 经过读取宏的反相映射后：变量中的 bit 为 0 代表检测到黑线，1 代表白地
+        // 因此我们检测 0 来累加压中黑线的探头数量
         // bit11 对应 i=0(权重-5.5)，bit0 对应 i=11(权重5.5)
         if(((huidu_data >> (11 - i)) & 0x01) == 0) 
         {
@@ -64,15 +65,13 @@ float Huidu_Proc(uint16_t huidu_data)
         // 加权平均计算误差
         Huidu_Error = total_weight / Huidu_Sum;
         
-        // 放大边缘误差（如果偏离过大，加强回正力度）
-        if (Huidu_Error > 3.0f || Huidu_Error < -3.0f) {
-            Huidu_Error *= 1.2f; 
-        }
-
-        // 非线性死区平滑：衰减中心区域微调，防止振荡偏航
-        if (Huidu_Error > -1.0f && Huidu_Error < 1.0f) {
-            Huidu_Error *= 0.5f; 
-        }
+        // 核心算法优化：连续平滑的三次非线性函数代替生硬的分段阶跃
+        // 公式: y = 0.02 * x^3 + 0.6 * x
+        // 效果: 
+        // 1. 在误差靠近 0 时，主导项为 0.6x，等效于原代码的 0.5 倍死区衰减，防止直道画龙。
+        // 2. 在误差靠近 5.5 (边缘) 时，三次幂项急剧增大，输出可达 6.62，完美对齐原代码 x1.2 倍的极限回正拉力。
+        // 3. 曲线全程连续可导，彻底消除原代码在 1.0 和 3.0 阈值处引发的控制量突变抽搐。
+        Huidu_Error = (0.02f * Huidu_Error * Huidu_Error * Huidu_Error) + (0.6f * Huidu_Error);
     }
     else if(Huidu_Sum > 7)  // 探头触发过多，可能压到十字路口或者大面积黑块
     {

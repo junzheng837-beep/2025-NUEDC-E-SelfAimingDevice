@@ -41,7 +41,7 @@ void PD42S1_Init(void);
 /*-------------------------------------------------------------------------------------------*/
 /*---------------------------------------主函数----------------------------------------------*/
 /*-------------------------------------------------------------------------------------------*/
-// TODO : 测试
+
 int main(void)
 {
     SYSCFG_DL_init(); // TI底层外设初始化
@@ -70,10 +70,10 @@ int main(void)
         if (flag_1s_printf)
         {
             flag_1s_printf = 0;
-            extern float Motor1_Speed;
-            extern float Motor2_Speed;
-            extern long long Motor1_Total_Pulse;
-            extern long long Motor2_Total_Pulse;
+            extern volatile float Motor1_Speed;
+            extern volatile float Motor2_Speed;
+            extern volatile long long Motor1_Total_Pulse;
+            extern volatile long long Motor2_Total_Pulse;
             char msg[128];
             sprintf(msg, "SPD M1:%.1f M2:%.1f | PULSE M1:%lld M2:%lld\r\n", Motor1_Speed, Motor2_Speed, Motor1_Total_Pulse, Motor2_Total_Pulse);
             BLE_send_String((unsigned char*)msg);
@@ -84,7 +84,7 @@ int main(void)
         // 主循环仅调用任务调度器，具体的任务分发由 task.c 处理
         Task_Scheduler();
         
-        // 蓝牙数据接收处理 (依然保留蓝牙接收，以防你需要发指令，但移除所有向上位机发送数据的逻辑)
+        // 蓝牙数据接收处理 (依然保留蓝牙接收以防需要发指令，并配合上方的 BLE_send_String 实时上报状态)
         Receive_Bluetooth_Data();
     }
 }

@@ -199,6 +199,10 @@ void UART_MOTOR_INST_IRQHandler(void)
             {
                 uint8_t rx_data = DL_UART_Main_receiveData(UART_MOTOR_INST);
             
+            // 如果上一帧还未处理完毕，丢弃新数据避免覆盖
+            if (g_rx_frame_flag) {
+                return; 
+            }
             // 1. 帧头过滤：若未接收到有效帧头 0xC5，则丢弃无效数据
             if (g_rx_len == 0 && rx_data != 0xC5) {
                 return; 
@@ -233,6 +237,10 @@ void UART_MOTOR_2_INST_IRQHandler(void)
             {
                 uint8_t rx_data = DL_UART_Main_receiveData(UART_MOTOR_2_INST);
             
+            // 如果上一帧还未处理完毕，丢弃新数据避免覆盖
+            if (g_rx2_frame_flag) {
+                return; 
+            }
             // 1. 帧头过滤：校验起始字节 0xC5
             if (g_rx2_len == 0 && rx_data != 0xC5) {
                 return; 
