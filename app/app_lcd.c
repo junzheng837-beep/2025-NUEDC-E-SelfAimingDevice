@@ -1,11 +1,11 @@
 #include "app_lcd.h"
 #include "hw_lcd.h"
 #include "bsp_gyro.h"
+#include "bsp_sr04.h"
 #include "motor_ctrl.h"
 #include "task.h"
 #include "Encoder.h"
 #include "timer.h"
-#include "bsp_sr04.h"
 
 // ================= 外部变量声明 =================
 extern float Basic_Speed;                                   // 目标基础速度
@@ -15,11 +15,9 @@ extern uint8_t OLED_View_Select;                            // OLED选择界面�
 extern volatile float Motor1_Speed;                                  // 左轮速度 
 extern volatile float Motor2_Speed;                                  // 右轮速度
 
-// 新增：任务状态与传感器变量
 extern uint16_t Huidu_Datas;                                 // 灰度原始数据 (12位)
-
 extern float Debug_Yaw_Diff;  // 引入刚才在 task.c 定义的差值变量
-extern float Global_Ultrasonic_Distance;
+
 
 // ================= 脱机在线调参系统状态 =================
 uint8_t Tuning_Mode = 0;    // 0: 关闭调参, 1: 开启调参
@@ -154,8 +152,10 @@ static void Draw_Dashboard_Background(void) {
 static void Draw_Dashboard_Page2_Background(void) {
     LCD_Fill(0, 0, LCD_W, LCD_H, BLACK);
     UI_DrawTitleCenter(10, BLUE, "循迹PID看板");
+    LCD_ShowString(230, 10, (uint8_t *)"Dist:", GREEN, BLACK, 16, 0);
 
     // 左侧信息区域绘制
+
     LCD_ArcRect(10, 40, 160, 160, GRAYBLUE); // 调整边框宽度以适配数据长度
     LCD_ShowChinese(15, 45,  (uint8_t *)"循迹Kp:", GREEN, GRAYBLUE, 16, 1);
     LCD_ShowChinese(15, 75,  (uint8_t *)"循迹Ki:", WHITE, GRAYBLUE, 16, 1); 
@@ -396,10 +396,14 @@ void LCD_Show_Proc(void)
             //  新增：绘制进度条
             Draw_Speed_Bar(225, 124, Motor1_Speed);
             Draw_Speed_Bar(225, 154, Motor2_Speed);
+            
+            TFT_ShowFloat(270, 10, SR04_Get_Distance(), GREEN, BLACK, 16);
+
             break;
         }
 
         case 1: {
+
             // ================= 左侧：M1 PID，右侧：M2 PID =================
             // 动态调参选择框绘制
             if (Tuning_Mode != last_tuning_mode || Tuning_Loop != last_tuning_loop || Tuning_Cursor != last_tuning_cursor) {
@@ -475,10 +479,6 @@ void LCD_Show_Proc(void)
             //  绘制进度条
             Draw_Speed_Bar(72, 154, Motor1_Speed);
             Draw_Speed_Bar(225, 154, Motor2_Speed);
-            
-            // 临时在左上角/顶栏显示超声波距离
-            TFT_ShowFloat(80, 10, Global_Ultrasonic_Distance, WHITE, BLACK, 16);
-            LCD_ShowString(150, 10, (uint8_t *)"cm", GREEN, BLACK, 16, 0);
 
             break;
         }

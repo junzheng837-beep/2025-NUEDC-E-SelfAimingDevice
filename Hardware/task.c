@@ -10,6 +10,7 @@
 #include "bsp_gyro.h"
 #include "smd.h"
 #include "process_frame.h"
+#include "bsp_sr04.h"
 
 // =================================================================
 // 在 task.c 顶部的变量定义区，接管 Task_Mode 变量

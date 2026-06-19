@@ -54,8 +54,7 @@ volatile uint8_t flag_50ms_telemetry = 0;
 volatile uint8_t flag_50ms_lcd = 0;
 volatile uint16_t telemetry_pause_ms = 0;
 
-volatile uint8_t flag_100ms_sr04 = 0;
-float Global_Ultrasonic_Distance = 0.0f;
+
 
 float Task1_Time_Sec = 0.0f; // 任务一用时
 float Task2_Time_Sec = 0.0f; // 任务二用时
@@ -122,7 +121,6 @@ void TIMER_0_INST_IRQHandler(void)
             if (++count_100ms >= 100) 
             {
                 count_100ms = 0;
-                flag_100ms_sr04 = 1; // 通知主循环读取超声波
             }
              
             // 1000ms 周期任务处理
