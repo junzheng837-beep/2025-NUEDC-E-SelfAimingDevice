@@ -1,6 +1,6 @@
 #include "Encoder.h"
-#include "bsp_sr04.h"
 #include "timer.h"
+#include "bsp_sr04.h"
 
 volatile uint32_t motor1_latest_pulse_micros = 0;
 volatile uint32_t motor2_latest_pulse_micros = 0;
@@ -18,13 +18,8 @@ void GROUP1_IRQHandler(void){
 	if(DL_Interrupt_getStatusGroup(DL_INTERRUPT_GROUP_1,DL_INTERRUPT_GROUP1_GPIOA)){
 		uint32_t Encoder_GPIO_Int = DL_GPIO_getEnabledInterruptStatus(GPIOA, 0xFFFFFFFF);
         
-        // --- SR04 Hook ---
-        if ((Encoder_GPIO_Int & SR04_ECHO_PIN) == SR04_ECHO_PIN){
-            DL_GPIO_clearInterruptStatus(SR04_PORT, SR04_ECHO_PIN);
-            SR04_ECHO_IRQHandler();
-        }
-        // -----------------
-		
+        SR04_IRQHandler();
+        
 		// 通道1 原左轮A相（现映射为右轮A相，即 Motor2）
 		if ((Encoder_GPIO_Int & Encoder_A_PIN) == Encoder_A_PIN){
 			DL_GPIO_clearInterruptStatus(Encoder_PORT, Encoder_A_PIN);
