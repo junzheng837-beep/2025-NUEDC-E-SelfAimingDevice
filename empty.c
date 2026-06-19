@@ -65,7 +65,7 @@ int main(void)
             JY61P_Data = get_angle();
 
             static uint8_t sr04_div = 0;
-            if (++sr04_div >= 10) { // 50ms trigger
+            if (++sr04_div >= 4) { // 20ms trigger (极限提速 50Hz)
                 sr04_div = 0;
                 SR04_Trigger();
             }

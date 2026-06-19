@@ -15,11 +15,11 @@ volatile float Measure_Distance = 0;
 
 // 外部中断读取编码器脉冲值
 void GROUP1_IRQHandler(void){
+    // SR04 现已被迁移至 GPIOB，需独立判断或直接在入口调用（内部自带 pending 检查）
+    SR04_IRQHandler();
+
 	if(DL_Interrupt_getStatusGroup(DL_INTERRUPT_GROUP_1,DL_INTERRUPT_GROUP1_GPIOA)){
 		uint32_t Encoder_GPIO_Int = DL_GPIO_getEnabledInterruptStatus(GPIOA, 0xFFFFFFFF);
-        
-        SR04_IRQHandler();
-        
 		// 通道1 原左轮A相（现映射为右轮A相，即 Motor2）
 		if ((Encoder_GPIO_Int & Encoder_A_PIN) == Encoder_A_PIN){
 			DL_GPIO_clearInterruptStatus(Encoder_PORT, Encoder_A_PIN);

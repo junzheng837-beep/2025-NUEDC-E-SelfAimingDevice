@@ -147,8 +147,8 @@ static void Timer_10ms_Control_Task(void)
 {
     static uint8_t cnt_50ms = 0;
     
-    // 50ms 标志位生成
-    if (++cnt_50ms >= 5) 
+    // 20ms 标志位生成 (极限提速 50Hz)
+    if (++cnt_50ms >= 2) 
     {
         cnt_50ms = 0;
         flag_50ms_lcd = 1;

@@ -19,6 +19,7 @@ const GPIO6  = GPIO.addInstance();
 const GPIO7  = GPIO.addInstance();
 const GPIO8  = GPIO.addInstance();
 const GPIO9  = GPIO.addInstance();
+const GPIO10 = GPIO.addInstance();
 const PWM    = scripting.addModule("/ti/driverlib/PWM", {}, false);
 const PWM1   = PWM.addInstance();
 const SPI    = scripting.addModule("/ti/driverlib/SPI", {}, false);
@@ -29,6 +30,7 @@ const TIMER1 = TIMER.addInstance();
 const TIMER2 = TIMER.addInstance();
 const TIMER3 = TIMER.addInstance();
 const TIMER4 = TIMER.addInstance();
+const TIMER5 = TIMER.addInstance();
 const UART   = scripting.addModule("/ti/driverlib/UART", {}, false);
 const UART1  = UART.addInstance();
 const UART2  = UART.addInstance();
@@ -222,6 +224,20 @@ GPIO9.associatedPins[0].pin.$assign = "PA8";
 GPIO9.associatedPins[1].$name       = "M2_DIR";
 GPIO9.associatedPins[1].pin.$assign = "PA7";
 
+GPIO10.$name                          = "GPIO_SR04";
+GPIO10.associatedPins.create(2);
+GPIO10.associatedPins[0].$name        = "TRIG";
+GPIO10.associatedPins[0].assignedPort = "PORTB";
+GPIO10.associatedPins[0].assignedPin  = "2";
+GPIO10.associatedPins[0].pin.$assign  = "PB2";
+GPIO10.associatedPins[1].$name        = "ECHO";
+GPIO10.associatedPins[1].direction    = "INPUT";
+GPIO10.associatedPins[1].assignedPort = "PORTB";
+GPIO10.associatedPins[1].assignedPin  = "3";
+GPIO10.associatedPins[1].interruptEn  = true;
+GPIO10.associatedPins[1].polarity     = "RISE_FALL";
+GPIO10.associatedPins[1].pin.$assign  = "PB3";
+
 PWM1.$name                      = "PWM_0";
 PWM1.timerCount                 = 10000;
 PWM1.timerStartTimer            = true;
@@ -289,6 +305,13 @@ TIMER4.timerClkDiv      = 8;
 TIMER4.timerClkPrescale = 8;
 TIMER4.interrupts       = ["ZERO"];
 
+TIMER5.$name              = "TIMER_SR04";
+TIMER5.timerClkDiv        = 8;
+TIMER5.timerClkPrescale   = 8;
+TIMER5.timerMode          = "PERIODIC_UP";
+TIMER5.timerPeriod        = "30 ms";
+TIMER5.peripheral.$assign = "TIMG6";
+
 UART1.$name                    = "UART_0";
 UART1.enabledInterrupts        = ["RX"];
 UART1.interruptPriority        = "0";
@@ -354,30 +377,6 @@ UART4.rxPinConfig.hideOutputInversion  = scripting.forceWrite(false);
 UART4.rxPinConfig.onlyInternalResistor = scripting.forceWrite(false);
 UART4.rxPinConfig.passedPeripheralType = scripting.forceWrite("Digital");
 UART4.rxPinConfig.$name                = "ti_driverlib_gpio_GPIOPinGeneric9";
-
-const GPIO10 = GPIO.addInstance();
-GPIO10.$name                              = "GPIO_SR04";
-GPIO10.associatedPins.create(2);
-GPIO10.associatedPins[0].$name            = "TRIG";
-GPIO10.associatedPins[0].direction        = "OUTPUT";
-GPIO10.associatedPins[0].assignedPort     = "PORTA";
-GPIO10.associatedPins[0].assignedPin      = "3";
-GPIO10.associatedPins[0].pin.$assign      = "PA3";
-GPIO10.associatedPins[1].$name            = "ECHO";
-GPIO10.associatedPins[1].direction        = "INPUT";
-GPIO10.associatedPins[1].assignedPort     = "PORTA";
-GPIO10.associatedPins[1].assignedPin      = "4";
-GPIO10.associatedPins[1].interruptEn      = true;
-GPIO10.associatedPins[1].polarity         = "RISE_FALL";
-GPIO10.associatedPins[1].pin.$assign      = "PA4";
-
-const TIMER5 = TIMER.addInstance();
-TIMER5.$name              = "TIMER_SR04";
-TIMER5.timerClkDiv        = 8;
-TIMER5.timerClkPrescale   = 4;
-TIMER5.timerMode          = "PERIODIC_UP";
-TIMER5.timerPeriod        = "65535";
-TIMER5.peripheral.$assign = "TIMG6";
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future
