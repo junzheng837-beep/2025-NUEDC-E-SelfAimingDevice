@@ -1309,11 +1309,11 @@ void smd_pos_mode(uint8_t addr, uint8_t dir, uint8_t acc, uint16_t speed, uint32
     cmd[8] =  (uint8_t)((pulses >> 16) & 0xFF); /* 脉冲数(bit16 - bit23) */
     cmd[9] =  (uint8_t)((pulses >> 8) & 0xFF);  /* 脉冲数(bit8  - bit15) */
     cmd[10] = (uint8_t)((pulses >> 0) & 0xFF);  /* 脉冲数(bit0  - bit7) */
-    cmd[12] = smd_checksum(cmd, 12);        /* 校验和 */
-    cmd[13] = FRAME_TAIL;                   /* 帧尾 */
+    cmd[11] = smd_checksum(cmd, 11);        /* 校验和 */
+    cmd[12] = FRAME_TAIL;                   /* 帧尾 */
 
     /* 发送命令 */
-    smd_send_data(cmd, 14);
+    smd_send_data(cmd, 13);
 }
 
 /**
@@ -1341,11 +1341,11 @@ void smd_pos_rel_mode(uint8_t addr, uint8_t dir, uint8_t acc, uint16_t speed, ui
     cmd[8] =  (uint8_t)((pulses >> 16) & 0xFF); /* 脉冲数(bit16 - bit23) */
     cmd[9] =  (uint8_t)((pulses >> 8) & 0xFF);  /* 脉冲数(bit8  - bit15) */
     cmd[10] = (uint8_t)((pulses >> 0) & 0xFF);  /* 脉冲数(bit0  - bit7) */
-    cmd[12] = smd_checksum(cmd, 12);        /* 校验和 */
-    cmd[13] = FRAME_TAIL;                   /* 帧尾 */
+    cmd[11] = smd_checksum(cmd, 11);        /* 校验和 */
+    cmd[12] = FRAME_TAIL;                   /* 帧尾 */
 
     /* 发送命令 */
-    smd_send_data(cmd, 14);
+    smd_send_data(cmd, 13);
 }
 
 /**

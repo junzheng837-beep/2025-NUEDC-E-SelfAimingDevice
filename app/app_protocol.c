@@ -48,16 +48,24 @@ void K230_Parse_Data(uint8_t byte)
                     int32_t pos_x = (int32_t)(buf[0] | (buf[1]<<8) | (buf[2]<<16) | (buf[3]<<24));
                     int32_t pos_y = (int32_t)(buf[4] | (buf[5]<<8) | (buf[6]<<16) | (buf[7]<<24));
                     
-                    uint8_t dir_x = (pos_x >= 0) ? 0 : 1; 
-                    uint8_t dir_y = (pos_y >= 0) ? 0 : 1;
-                    uint32_t pulse_x = (pos_x >= 0) ? pos_x : -pos_x;
-                    uint32_t pulse_y = (pos_y >= 0) ? pos_y : -pos_y;
+                    static int32_t last_pos_x = -999999;
+                    static int32_t last_pos_y = -999999;
                     
-                    g_smd_target_uart = 1; 
-                    smd_pos_mode(1, dir_x, 5, 200, pulse_x); // 设置归位速度 (RPM)
+                    if (pos_x != last_pos_x) {
+                        uint8_t dir_x = (pos_x >= 0) ? 0 : 1; 
+                        uint32_t pulse_x = (pos_x >= 0) ? pos_x : -pos_x;
+                        g_smd_target_uart = 1; 
+                        smd_pos_mode(1, dir_x, 5, 200, pulse_x); // 设置归位速度 (RPM)
+                        last_pos_x = pos_x;
+                    }
                     
-                    g_smd_target_uart = 2; 
-                    smd_pos_mode(1, dir_y, 5, 200, pulse_y); 
+                    if (pos_y != last_pos_y) {
+                        uint8_t dir_y = (pos_y >= 0) ? 0 : 1;
+                        uint32_t pulse_y = (pos_y >= 0) ? pos_y : -pos_y;
+                        g_smd_target_uart = 2; 
+                        smd_pos_mode(1, dir_y, 5, 200, pulse_y); 
+                        last_pos_y = pos_y;
+                    }
                 }
             }
             state = 0; 
