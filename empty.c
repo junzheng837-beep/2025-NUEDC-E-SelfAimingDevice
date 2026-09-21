@@ -14,6 +14,7 @@
 #include "key.h"
 #include "main.h"
 #include "motor_ctrl.h"
+#include "smd.h"
 #include "protocol.h"
 #include "task.h"
 #include "ti_msp_dl_config.h"
@@ -51,6 +52,7 @@ int main(void) {
   PD42S1_Init();    // 电机相关的初始化 (如果你的smd.c里有初始化函数的话)
   SR04_Init();      // 超声波初始化
 
+
   while (1) {
 
     if (flag_5ms_gyro_read) {
@@ -81,6 +83,9 @@ int main(void) {
     LCD_Show_Proc();
     // 主循环仅调用任务调度器，具体的任务分发由 task.c 处理
     Task_Scheduler();
+
+    // K230 步进电机实时速度控制
+    K230_Speed_Control();
 
     // 蓝牙数据接收处理 (依然保留蓝牙接收以防需要发指令，并配合上方的
     // BLE_send_String 实时上报状态)
@@ -137,7 +142,7 @@ void PD42S1_Init(void) {
   clear_uart_rx_buffer(1);
   smd_pos_mode(
       1, 0, 5, 80,
-      12500); // 👈 (地址, 方向, 加速度acc, 最大速度speed, 脉冲)。【备忘：1整圈
+      17500); // 👈 (地址, 方向, 加速度acc, 最大速度speed, 脉冲)。【备忘：1整圈
               // = 51200 脉冲，当前12500约为1/4圈】
   handle_ack(1, 50);
 
@@ -161,7 +166,7 @@ void PD42S1_Init(void) {
 
   // 新增：电机2同样恢复加速度避开共振
   clear_uart_rx_buffer(2);
-  smd_pos_mode(1, 0, 5, 80, 36300); // 【备忘：1整圈 = 51200 脉冲】
+  smd_pos_mode(1, 0, 5, 80, 25500); // 【备忘：1整圈 = 51200 脉冲】
   handle_ack(2, 50);
   /* ==================================================================== */
 }

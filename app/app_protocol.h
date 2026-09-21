@@ -5,5 +5,6 @@
 
 void Protocol_Datas_Proc(void);
 void K230_Parse_Data(uint8_t byte);
+void K230_Speed_Control(void);
 
 #endif

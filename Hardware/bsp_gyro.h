@@ -42,4 +42,3 @@ uint8_t writeDataJy61p(uint8_t dev, uint8_t reg, uint8_t* data, uint32_t length)
 Gyro_Struct *get_angle(void);
 
 #endif
-

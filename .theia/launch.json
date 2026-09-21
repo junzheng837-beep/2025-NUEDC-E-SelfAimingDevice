@@ -8,6 +8,9 @@
             "projectInfo": {
                 "name": "DS_E03_Show06 copy",
                 "resourceId": "/DS_E03_Show06 copy"
+            },
+            "targetConfig": {
+                "doFlashErase": true
             }
         }
     ]
