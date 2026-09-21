@@ -2,7 +2,7 @@
  * @file timer.c
  * @brief 定时器中断及核心控制任务调度
  * @details 处理系统定时任务，包括按键扫描、传感器读取、PID控制计算以及电机输出控制等。
- * @author WILLiam
+ * @author junzheng837-beep
  * @date 2026-06-12
  */
 

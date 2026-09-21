@@ -32,6 +32,6 @@ Thumbs.db
 # - .project        (Eclipse 工程描述)
 # - .cproject       (C/C++ 构建配置)
 # - .ccsproject     (CCS 专属配置)
-# - *.ccxml         (目标仿真器配置文件，没它队友无法烧录)
+# - *.ccxml         (目标仿真器配置文件)
 # - *.syscfg        (TI SysConfig 配置文件，若使用了该工具)
 # ==========================================
